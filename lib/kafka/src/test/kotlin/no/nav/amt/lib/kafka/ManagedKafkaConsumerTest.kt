@@ -90,6 +90,7 @@ class ManagedKafkaConsumerTest {
 
         eventually {
             antallGangerKallt shouldBe 2
+            consumer.status.retries shouldBe antallGangerKallt
             consumer.stop()
         }
     }

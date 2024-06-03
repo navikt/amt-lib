@@ -25,6 +25,8 @@ class ManagedKafkaConsumer<K, V>(
 
     private var running = false
 
+    val status: ConsumerStatus = ConsumerStatus()
+
     fun run() = scope.launch {
         log.info("Started consumer for topic: $topic")
         running = true
@@ -39,6 +41,10 @@ class ManagedKafkaConsumer<K, V>(
     private suspend fun poll(consumer: KafkaConsumer<K, V>) {
         val offsetsToCommit = mutableMapOf<TopicPartition, OffsetAndMetadata>()
 
+        if (status.isFailure) {
+            delay(status.backoffDuration)
+        }
+
         try {
             val records = consumer.poll(Duration.ofMillis(1000))
             seekToEarliestOffsets(records, consumer)
@@ -50,11 +56,13 @@ class ManagedKafkaConsumer<K, V>(
                 val offset = OffsetAndMetadata(record.offset() + 1)
                 offsetsToCommit[partition] = offset
             }
+            status.success()
         } catch (e: WakeupException) {
             // Consumeren skal avsluttes...
             stop()
         } catch (t: Throwable) {
-            delay(1000)
+            status.failure()
+            log.error("Failed to process records for topic $topic", t)
         } finally {
             offsetsToCommit.forEach { (partition, offset) -> consumer.seek(partition, offset) }
             consumer.commitSync(offsetsToCommit)
