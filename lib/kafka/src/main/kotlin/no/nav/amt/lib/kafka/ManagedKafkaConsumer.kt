@@ -111,6 +111,6 @@ class ManagedKafkaConsumer<K, V>(
 
     fun stop() {
         running = false
-        job.complete()
+        job.cancel()
     }
 }

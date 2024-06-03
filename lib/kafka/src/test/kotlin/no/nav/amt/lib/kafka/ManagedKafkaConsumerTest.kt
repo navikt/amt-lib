@@ -24,7 +24,7 @@ class ManagedKafkaConsumerTest {
     private val stringConsumerConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost()).consumerConfig(
         keyDeserializer = StringDeserializer(),
         valueDeserializer = StringDeserializer(),
-        groupId = "test-consumer",
+        groupId = "test-consumer-${UUID.randomUUID()}",
     )
 
     @Test
@@ -59,7 +59,7 @@ class ManagedKafkaConsumerTest {
             .consumerConfig(
                 keyDeserializer = UUIDDeserializer(),
                 valueDeserializer = ByteArrayDeserializer(),
-                groupId = "test-consumer",
+                groupId = "test-consumer-${UUID.randomUUID()}",
             )
 
         val consumer = ManagedKafkaConsumer(uuidTopic, config) { k: UUID, v: ByteArray ->
@@ -84,7 +84,9 @@ class ManagedKafkaConsumerTest {
 
         val consumer = ManagedKafkaConsumer<String, String>(topic, stringConsumerConfig) { _, _ ->
             antallGangerKallt++
-            throw IllegalStateException("skal feile noen ganger")
+            if (antallGangerKallt < 3) {
+                throw IllegalStateException("skal feile noen ganger")
+            }
         }
         consumer.run()
 
