@@ -35,3 +35,11 @@ publishing {
         }
     }
 }
+
+sourceSets {
+    main {
+        resources {
+            setSrcDirs(setOf(file("src/main/resource"), file("../resources")))
+        }
+    }
+}

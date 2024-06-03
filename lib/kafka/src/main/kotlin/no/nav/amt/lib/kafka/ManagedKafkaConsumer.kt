@@ -43,8 +43,6 @@ class ManagedKafkaConsumer<K, V>(
             val records = consumer.poll(Duration.ofMillis(1000))
             seekToEarliestOffsets(records, consumer)
 
-            log.info("Polled ${records.joinToString { it.offset().toString() }}")
-
             records.forEach { record ->
                 process(record)
 
