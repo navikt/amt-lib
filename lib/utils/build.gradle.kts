@@ -1,6 +1,3 @@
-group = "no.nav.amt.lib"
-version = "0.0.1"
-
 plugins {
     alias(libs.plugins.jvm)
     alias(libs.plugins.serialization)
