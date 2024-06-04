@@ -11,7 +11,9 @@ class ConsumerStatus {
     private var _retries: Int = 0
 
     val retries: Int get() = _retries
+
     val isFailure: Boolean get() = retries > 0
+
     val backoffDuration: Long
         get() {
             val delay = 500 * retries * retries + 1000L

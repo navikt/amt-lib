@@ -84,9 +84,7 @@ class ManagedKafkaConsumerTest {
 
         val consumer = ManagedKafkaConsumer<String, String>(topic, stringConsumerConfig) { _, _ ->
             antallGangerKallt++
-            if (antallGangerKallt < 3) {
-                throw IllegalStateException("skal feile noen ganger")
-            }
+            error("skal feile noen ganger")
         }
         consumer.run()
 
