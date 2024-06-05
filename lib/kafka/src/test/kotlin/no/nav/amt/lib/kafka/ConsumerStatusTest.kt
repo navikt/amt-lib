@@ -32,7 +32,7 @@ class ConsumerStatusTest {
     }
 
     @Test
-    fun `backoffDuration - skal aldri være større enn max-poll-interval`() {
+    fun `backoffDuration - skal aldri være større enn MAX_DELAY`() {
         val status = ConsumerStatus()
 
         repeat(25) { status.failure() }
