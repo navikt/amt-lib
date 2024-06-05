@@ -9,6 +9,8 @@ import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.StringSerializer
 
+const val MAX_POLL_INTERVAL_MS = 300_000
+
 class KafkaConfigImpl(
     private val autoOffsetReset: String = "earliest",
 ) : KafkaConfig {
@@ -47,7 +49,7 @@ class KafkaConfigImpl(
         ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to keyDeserializer::class.java,
         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to valueDeserializer::class.java,
-        ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG to 500,
+        ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG to MAX_POLL_INTERVAL_MS,
     ) + commonConfig()
 
     override fun producerConfig() = mapOf(
