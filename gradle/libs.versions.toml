@@ -3,7 +3,7 @@
 
 [versions]
 junit-jupiter-engine = "5.10.2"
-kotest-version = "5.9.0"
+kotest-version = "5.9.1"
 kafka-clients-version = "3.7.0"
 kotlinx-version = "1.8.1"
 logback-version = "1.5.6"
