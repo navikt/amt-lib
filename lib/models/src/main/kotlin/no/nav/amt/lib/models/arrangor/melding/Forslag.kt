@@ -35,6 +35,7 @@ data class Forslag(
         data object VenterPaSvar : Status
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
     sealed interface Endring
 
     data class ForlengDeltakelse(
