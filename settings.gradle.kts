@@ -18,3 +18,5 @@ include("lib:testing")
 findProject(":lib:testing")?.name = "testing"
 include("lib:utils")
 findProject(":lib:utils")?.name = "utils"
+include("lib:models")
+findProject(":lib:models")?.name = "models"
