@@ -35,6 +35,15 @@ data class Forslag(
         data object VenterPaSvar : Status
     }
 
+    val sistEndret get(): LocalDateTime {
+        return when (status) {
+            is Status.VenterPaSvar -> opprettet
+            is Status.Avvist -> status.avvist
+            is Status.Godkjent -> status.godkjent
+            is Status.Tilbakekalt -> status.tilbakekalt
+        }
+    }
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
     sealed interface Endring
 
