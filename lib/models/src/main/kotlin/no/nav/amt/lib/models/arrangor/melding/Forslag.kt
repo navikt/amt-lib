@@ -35,7 +35,7 @@ data class Forslag(
         data object VenterPaSvar : Status
     }
 
-    fun getSistEndret(): LocalDateTime {
+    val sistEndret get(): LocalDateTime {
         return when (status) {
             is Status.VenterPaSvar -> opprettet
             is Status.Avvist -> status.avvist
