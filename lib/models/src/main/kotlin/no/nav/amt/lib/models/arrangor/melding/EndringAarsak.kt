@@ -15,7 +15,7 @@ data object FikkIkkePlass : EndringAarsak
 
 data object Utdanning : EndringAarsak
 
-data object AvlystKontrak : EndringAarsak
+data object AvlystKontrakt : EndringAarsak
 
 data object IkkeMott : EndringAarsak
 
