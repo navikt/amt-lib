@@ -56,6 +56,10 @@ data class Forslag(
         val aarsak: EndringAarsak,
     ) : Endring
 
+    data class IkkeAktuell(
+        val aarsak: EndringAarsak,
+    ) : Endring
+
     data class NavAnsatt(
         val id: UUID,
         val enhetId: UUID,
