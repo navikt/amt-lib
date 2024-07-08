@@ -6,7 +6,7 @@ plugins {
 
 dependencies {
     api(libs.kafka.clients)
-    implementation(libs.kotlinx.coroutines)
+    api(libs.kotlinx.coroutines)
     implementation(libs.logback)
     implementation(project(":lib:utils"))
 

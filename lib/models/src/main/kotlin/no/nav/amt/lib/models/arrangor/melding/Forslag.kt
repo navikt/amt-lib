@@ -10,7 +10,7 @@ data class Forslag(
     val deltakerId: UUID,
     val opprettetAvArrangorAnsattId: UUID,
     val opprettet: LocalDateTime,
-    val begrunnelse: String,
+    val begrunnelse: String?,
     val endring: Endring,
     val status: Status,
 ) : Melding {
@@ -49,6 +49,11 @@ data class Forslag(
 
     data class ForlengDeltakelse(
         val sluttdato: LocalDate,
+    ) : Endring
+
+    data class AvsluttDeltakelse(
+        val sluttdato: LocalDate,
+        val aarsak: EndringAarsak,
     ) : Endring
 
     data class NavAnsatt(
