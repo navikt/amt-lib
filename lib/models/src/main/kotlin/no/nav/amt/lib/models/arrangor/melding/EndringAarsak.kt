@@ -15,11 +15,7 @@ data object FikkIkkePlass : EndringAarsak
 
 data object Utdanning : EndringAarsak
 
-data object AvlystKontrakt : EndringAarsak
-
 data object IkkeMott : EndringAarsak
-
-data object Feilregistrert : EndringAarsak
 
 data class Annet(
     val beskrivelse: String,
