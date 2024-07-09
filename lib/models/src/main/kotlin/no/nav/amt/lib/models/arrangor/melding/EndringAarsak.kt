@@ -10,8 +10,6 @@ sealed interface EndringAarsak {
 
     data object TrengerAnnenStotte : EndringAarsak
 
-    data object FikkIkkePlass : EndringAarsak
-
     data object Utdanning : EndringAarsak
 
     data object IkkeMott : EndringAarsak
