@@ -4,17 +4,21 @@ import io.kotest.matchers.shouldBe
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.testing.SingletonKafkaProvider
 import no.nav.amt.lib.testing.eventually
+import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.ByteArraySerializer
+import org.apache.kafka.common.serialization.IntegerDeserializer
+import org.apache.kafka.common.serialization.IntegerSerializer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
 import org.apache.kafka.common.serialization.UUIDSerializer
 import org.junit.jupiter.api.Test
+import java.time.Duration
 import java.util.Properties
 import java.util.UUID
 
@@ -24,6 +28,12 @@ class ManagedKafkaConsumerTest {
     private val stringConsumerConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost()).consumerConfig(
         keyDeserializer = StringDeserializer(),
         valueDeserializer = StringDeserializer(),
+        groupId = "test-consumer-${UUID.randomUUID()}",
+    )
+
+    private val intConsumerConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost()).consumerConfig(
+        keyDeserializer = IntegerDeserializer(),
+        valueDeserializer = IntegerDeserializer(),
         groupId = "test-consumer-${UUID.randomUUID()}",
     )
 
@@ -93,6 +103,88 @@ class ManagedKafkaConsumerTest {
             consumer.status.retries shouldBe antallGangerKallt
             consumer.stop()
         }
+    }
+
+    @Test
+    fun `ManagedKafkaConsumer - konsumerer mange meldinger med feil og flere partisjoner`() {
+        val intTopic = NewTopic("int.topic-1", 4, 1)
+        SingletonKafkaProvider.adminClient
+            .createTopics(listOf(intTopic))
+            .all()
+            .get()
+
+        val data = (1..500).toList()
+        val consumed = mutableListOf<Int>()
+        val failures = mutableListOf(7, 42, 42, 333)
+
+        val consumer = ManagedKafkaConsumer<Int, Int>(intTopic.name(), intConsumerConfig) { k, _ ->
+            if (k in failures) {
+                failures.remove(k)
+                error("Skal feile på $k")
+            }
+            consumed.add(k)
+        }
+
+        consumer.start()
+        data.forEach {
+            val partition = (0..3).random()
+            produceIntInt(ProducerRecord(intTopic.name(), partition, it, it))
+        }
+
+        eventually(Duration.ofSeconds(15)) {
+            consumed.size shouldBe data.size
+            consumed.toSet().size shouldBe data.size
+        }
+    }
+
+    @Test
+    fun `ManagedKafkaConsumer - konsumerer mange meldinger med samme key i riktig rekkefølge`() {
+        val intTopic = NewTopic("int.topic-2", 4, 1)
+        SingletonKafkaProvider.adminClient
+            .createTopics(listOf(intTopic))
+            .all()
+            .get()
+
+        val keys = (1..50).toList()
+        val firstValue = 1
+        val lastValue = 2
+        val data = keys.map { Pair(it, firstValue) } + keys.map { Pair(it, lastValue) }
+
+        val consumed = mutableMapOf<Int, Int>()
+        val failures = mutableListOf(7, 42, 42, 333)
+        val consumer = ManagedKafkaConsumer<Int, Int>(intTopic.name(), intConsumerConfig) { k, v ->
+            if (k in failures) {
+                failures.remove(k)
+                error("Skal feile på $k")
+            }
+            if (v == lastValue) {
+                consumed[k] shouldBe firstValue
+            }
+            consumed[k] = v
+        }
+
+        consumer.start()
+
+        data.forEach {
+            val partition = it.first % intTopic.numPartitions()
+            produceIntInt(ProducerRecord(intTopic.name(), partition, it.first, it.second))
+        }
+
+        eventually(Duration.ofSeconds(15)) {
+            consumed.values.toSet() shouldBe setOf(lastValue)
+        }
+    }
+}
+
+private fun produceIntInt(record: ProducerRecord<Int, Int>): RecordMetadata {
+    KafkaProducer<Int, Int>(
+        Properties().apply {
+            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SingletonKafkaProvider.getHost())
+            put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer::class.java)
+            put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer::class.java)
+        },
+    ).use { producer ->
+        return producer.send(record).get()
     }
 }
 

@@ -13,6 +13,10 @@ object SingletonKafkaProvider {
 
     private val reuseConfig = ContainerReuseConfig()
 
+    val adminClient: AdminClient by lazy {
+        AdminClient.create(mapOf(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG to getHost()))
+    }
+
     fun start() {
         if (kafkaContainer != null) return
 
@@ -43,15 +47,12 @@ object SingletonKafkaProvider {
                 } else {
                     kafkaContainer?.stop()
                 }
+                adminClient.close()
             },
         )
     }
 
     fun cleanup() {
-        val adminClient = AdminClient.create(
-            mapOf(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG to kafkaContainer!!.bootstrapServers),
-        )
-
         val topics = adminClient.listTopics().names().get()
 
         topics.forEach {
@@ -62,7 +63,6 @@ object SingletonKafkaProvider {
                 log.warn("Could not delete topic $it", e)
             }
         }
-        adminClient.close()
     }
 
     private fun getKafkaImage(): String {
