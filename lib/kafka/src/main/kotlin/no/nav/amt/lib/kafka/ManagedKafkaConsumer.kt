@@ -14,6 +14,7 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
 import java.time.Duration
+import kotlin.RuntimeException
 
 class ManagedKafkaConsumer<K, V>(
     private val topic: String,
@@ -63,6 +64,10 @@ class ManagedKafkaConsumer<K, V>(
 
     private suspend fun poll(consumer: KafkaConsumer<K, V>) {
         if (status.isFailure) {
+            log.info(
+                "Consumer status for topic $topic is failure, " +
+                    "delaying ${status.backoffDuration}ms before retrying",
+            )
             delay(status.backoffDuration)
         }
 
@@ -71,6 +76,10 @@ class ManagedKafkaConsumer<K, V>(
 
             seekToEarliestOffsets(records, consumer)
 
+            if (!records.isEmpty) {
+                log.info("Consumer for $topic polled ${records.count()} records.")
+            }
+
             records.forEach { record ->
                 process(record)
 
@@ -78,9 +87,10 @@ class ManagedKafkaConsumer<K, V>(
                 val offset = OffsetAndMetadata(record.offset() + 1)
 
                 offsetsToCommit[partition] = offset
+                status.success()
             }
-            status.success()
         } catch (t: Throwable) {
+            log.error(t.message, t)
             status.failure()
         } finally {
             commitOffsets(consumer)
@@ -125,17 +135,19 @@ class ManagedKafkaConsumer<K, V>(
                     "offset=${record.offset()}",
             )
         } catch (t: Throwable) {
-            log.error(
-                "Failed to consume record for " +
-                    "topic=${record.topic()} " +
-                    "key=${record.key()} " +
-                    "partition=${record.partition()} " +
-                    "offset=${record.offset()}",
-                t,
-            )
-            throw t
+            val msg = "Failed to consume record for " +
+                "topic=${record.topic()} " +
+                "key=${record.key()} " +
+                "partition=${record.partition()} " +
+                "offset=${record.offset()}"
+            throw ConsumerProcessingException(msg, t)
         }
     }
+
+    class ConsumerProcessingException(
+        msg: String,
+        cause: Throwable?,
+    ) : RuntimeException(msg, cause)
 
     private fun rebalanceListener(consumer: KafkaConsumer<K, V>) = object : ConsumerRebalanceListener {
         override fun onPartitionsRevoked(partitions: MutableCollection<TopicPartition>) {

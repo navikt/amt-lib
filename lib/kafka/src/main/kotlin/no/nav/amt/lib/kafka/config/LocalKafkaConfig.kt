@@ -24,7 +24,7 @@ class LocalKafkaConfig(
         ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to keyDeserializer::class.java,
         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to valueDeserializer::class.java,
-        ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG to 30_000,
+        ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG to MAX_POLL_INTERVAL_MS,
     ) + commonConfig()
 
     override fun producerConfig() = mapOf(
