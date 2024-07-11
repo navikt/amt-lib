@@ -58,3 +58,20 @@ repositories {
 ```
 
 Det er anbefalt å legge til GitHub Package Registry til slutt for å først søke igjennom andre repositories for avhengigheter.
+
+## Utvikling
+### Testing
+For å verifisere at biblioteket virker som forventet i andre apper lokalt kan man publisere til `mavenLocal()` ved å kjøre:
+```sh
+./gradlew publishToMavenLocal
+```
+
+I appen må man inkludere `mavenLocal()` i `repositories` samt endre versjonen av amt-lib. Hvis man ikke spesifiserer en versjon i `amt-lib.conventions.gradle.kts` blir default versjon `unspecified`:
+
+**Gradle**
+```kotlin
+repositories {
+    mavenLocal()
+    ...
+}
+```

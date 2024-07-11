@@ -24,7 +24,7 @@ java {
 publishing {
     publications {
         create<MavenPublication>("amt-lib") {
-            from(components["kotlin"])
+            from(components["java"])
         }
     }
 
