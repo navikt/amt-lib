@@ -32,6 +32,11 @@ data class Forslag(
             val tilbakekalt: LocalDateTime,
         ) : Status
 
+        data class Erstattet(
+            val erstattetMedForslagId: UUID,
+            val erstattet: LocalDateTime,
+        ) : Status
+
         data object VenterPaSvar : Status
     }
 
@@ -41,6 +46,7 @@ data class Forslag(
             is Status.Avvist -> status.avvist
             is Status.Godkjent -> status.godkjent
             is Status.Tilbakekalt -> status.tilbakekalt
+            is Status.Erstattet -> status.erstattet
         }
     }
 
