@@ -66,6 +66,24 @@ data class Forslag(
         val aarsak: EndringAarsak,
     ) : Endring
 
+    data class Deltakelsesmengde(
+        val deltakelsesprosent: Int?,
+        val dagerPerUke: Int?,
+    ) : Endring
+
+    data class Startdato(
+        val startdato: LocalDate?,
+        val sluttdato: LocalDate? = null,
+    ) : Endring
+
+    data class Sluttdato(
+        val sluttdato: LocalDate,
+    ) : Endring
+
+    data class Sluttarsak(
+        val aarsak: EndringAarsak,
+    ) : Endring
+
     data class NavAnsatt(
         val id: UUID,
         val enhetId: UUID,
