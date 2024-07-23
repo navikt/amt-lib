@@ -67,13 +67,13 @@ data class Forslag(
     ) : Endring
 
     data class Deltakelsesmengde(
-        val deltakelsesprosent: Int?,
+        val deltakelsesprosent: Int,
         val dagerPerUke: Int?,
     ) : Endring
 
     data class Startdato(
-        val startdato: LocalDate?,
-        val sluttdato: LocalDate? = null,
+        val startdato: LocalDate,
+        val sluttdato: LocalDate?,
     ) : Endring
 
     data class Sluttdato(
