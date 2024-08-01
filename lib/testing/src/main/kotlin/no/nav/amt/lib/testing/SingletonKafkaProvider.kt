@@ -47,7 +47,6 @@ object SingletonKafkaProvider {
                 } else {
                     kafkaContainer?.stop()
                 }
-                adminClient.close()
             },
         )
     }
