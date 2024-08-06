@@ -17,5 +17,5 @@ data class EndringFraArrangor(
     data class LeggTilOppstartsdato(
         val startdato: LocalDateTime,
         val sluttdato: LocalDateTime?,
-    )
+    ) : Endring
 }
