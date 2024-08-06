@@ -1,6 +1,7 @@
 package no.nav.amt.lib.models.arrangor.melding
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -15,7 +16,7 @@ data class EndringFraArrangor(
     sealed interface Endring
 
     data class LeggTilOppstartsdato(
-        val startdato: LocalDateTime,
-        val sluttdato: LocalDateTime?,
+        val startdato: LocalDate,
+        val sluttdato: LocalDate?,
     ) : Endring
 }
