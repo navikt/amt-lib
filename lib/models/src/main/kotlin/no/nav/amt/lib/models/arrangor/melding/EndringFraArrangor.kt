@@ -6,10 +6,10 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class EndringFraArrangor(
-    val id: UUID,
-    val deltakerId: UUID,
-    val opprettetAvArrangorAnsattId: UUID,
-    val opprettet: LocalDateTime,
+    override val id: UUID,
+    override val deltakerId: UUID,
+    override val opprettetAvArrangorAnsattId: UUID,
+    override val opprettet: LocalDateTime,
     val endring: Endring,
 ) : Melding {
     @JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
