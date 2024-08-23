@@ -12,12 +12,16 @@ object Database {
 
     fun init(config: DatabaseConfig) {
         dataSource = HikariDataSource().apply {
-            dataSourceClassName = "org.postgresql.ds.PGSimpleDataSource"
-            addDataSourceProperty("serverName", config.dbHost)
-            addDataSourceProperty("portNumber", config.dbPort)
-            addDataSourceProperty("databaseName", config.dbDatabase)
-            addDataSourceProperty("user", config.dbUsername)
-            addDataSourceProperty("password", config.dbPassword)
+            if (config.jdbcURL.isNotEmpty()) {
+                jdbcUrl = config.jdbcURL
+            } else {
+                dataSourceClassName = "org.postgresql.ds.PGSimpleDataSource"
+                addDataSourceProperty("serverName", config.dbHost)
+                addDataSourceProperty("portNumber", config.dbPort)
+                addDataSourceProperty("databaseName", config.dbDatabase)
+                addDataSourceProperty("user", config.dbUsername)
+                addDataSourceProperty("password", config.dbPassword)
+            }
             maximumPoolSize = 10
             minimumIdle = 1
             idleTimeout = 10001
@@ -28,17 +32,16 @@ object Database {
         runMigration()
     }
 
-    fun <A> query(block: (Session) -> A): A {
-        return using(sessionOf(dataSource)) { session ->
-            block(session)
-        }
+    fun <A> query(block: (Session) -> A): A = using(sessionOf(dataSource)) { session ->
+        block(session)
     }
 
     fun close() {
         (dataSource as HikariDataSource).close()
     }
 
-    private fun runMigration(initSql: String? = null): Int = Flyway.configure()
+    private fun runMigration(initSql: String? = null): Int = Flyway
+        .configure()
         .connectRetries(5)
         .dataSource(dataSource)
         .initSql(initSql)
