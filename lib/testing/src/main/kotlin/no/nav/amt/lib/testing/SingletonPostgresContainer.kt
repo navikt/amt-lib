@@ -43,6 +43,12 @@ object SingletonPostgresContainer {
         System.setProperty(DatabaseConfig.DB_DATABASE_KEY, container.databaseName)
         System.setProperty(DatabaseConfig.DB_PASSWORD_KEY, container.password)
         System.setProperty(DatabaseConfig.DB_USERNAME_KEY, container.username)
+
+        val jdbcURL = "jdbc:postgresql://${container.host}:${container.getMappedPort(POSTGRESQL_PORT)}" +
+            "/${container.databaseName}" +
+            "?password=${container.password}" +
+            "&user=${container.username}"
+        System.setProperty(DatabaseConfig.JDBC_URL_KEY, jdbcURL)
     }
 
     private fun createContainer(): PostgreSQLContainer<Nothing> {
@@ -70,11 +76,12 @@ object SingletonPostgresContainer {
     }
 
     fun cleanup() = Database.query {
-        val tables = it.run(
-            queryOf("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
-                .map { it.string("table_name") }
-                .asList,
-        ).filterNot { table -> table == "flyway_schema_history" }
+        val tables = it
+            .run(
+                queryOf("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+                    .map { it.string("table_name") }
+                    .asList,
+            ).filterNot { table -> table == "flyway_schema_history" }
 
         it.transaction { tx ->
             tables.forEach { table ->
