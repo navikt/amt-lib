@@ -10,20 +10,32 @@ import org.testcontainers.containers.PostgreSQLContainer.POSTGRESQL_PORT
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 import org.testcontainers.utility.DockerImageName
 
+object SingletonPostgres16Container {
+    init {
+        SingletonPostgresContainer.startWithImage("postgres:16-alpine")
+    }
+}
+
 object SingletonPostgresContainer {
     private val log = LoggerFactory.getLogger(javaClass)
-
-    private val postgresDockerImageName = getPostgresImage()
 
     private var postgresContainer: PostgreSQLContainer<Nothing>? = null
 
     private val reuseConfig = ContainerReuseConfig()
 
     fun start() {
+        start("postgres:14-alpine")
+    }
+
+    internal fun startWithImage(version: String) {
+        start(version)
+    }
+
+    private fun start(image: String) {
         if (postgresContainer == null) {
             log.info("Starting new postgres database...")
 
-            val container = createContainer()
+            val container = createContainer(image)
             postgresContainer = container
 
             container.start()
@@ -51,9 +63,9 @@ object SingletonPostgresContainer {
         System.setProperty(DatabaseConfig.JDBC_URL_KEY, jdbcURL)
     }
 
-    private fun createContainer(): PostgreSQLContainer<Nothing> {
+    private fun createContainer(image: String): PostgreSQLContainer<Nothing> {
         val container = PostgreSQLContainer<Nothing>(
-            DockerImageName.parse(postgresDockerImageName).asCompatibleSubstituteFor("postgres"),
+            DockerImageName.parse(image).asCompatibleSubstituteFor("postgres"),
         )
         container.addEnv("TZ", "Europe/Oslo")
         container.withReuse(reuseConfig.reuse)
@@ -90,13 +102,5 @@ object SingletonPostgresContainer {
                 tx.run(queryOf(sql).asExecute)
             }
         }
-    }
-
-    private fun getPostgresImage(): String {
-        val digest = when (System.getProperty("os.arch")) {
-            "aarch64" -> "@sha256:58ddae4817fc2b7ed43ac43c91f3cf146290379b7b615210c33fa62a03645e70"
-            else -> ""
-        }
-        return "postgres:14-alpine$digest"
     }
 }
