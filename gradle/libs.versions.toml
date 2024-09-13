@@ -5,7 +5,7 @@
 junit-jupiter-engine = "5.11.0"
 kotest-version = "5.9.1"
 kafka-clients-version = "3.8.0"
-kotlinx-version = "1.8.1"
+kotlinx-version = "1.9.0"
 logback-version = "1.5.8"
 testcontainers-version = "1.20.1"
 flyway-version = "10.18.0"
