@@ -50,6 +50,15 @@ data class Forslag(
         }
     }
 
+    fun getNavAnsatt() = when (val status = this.status) {
+        is Status.Avvist -> status.avvistAv
+        is Status.Godkjent -> status.godkjentAv
+        is Status.Erstattet,
+        is Status.Tilbakekalt,
+        Status.VenterPaSvar,
+        -> null
+    }
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
     sealed interface Endring
 
