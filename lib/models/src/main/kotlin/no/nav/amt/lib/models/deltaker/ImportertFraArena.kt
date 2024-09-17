@@ -5,7 +5,6 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class ImportertFraArena (
-    val id: UUID,
     val deltakerId: UUID,
     val importertDato: LocalDateTime,
     val deltakerVedImport: DeltakerVedImport,
