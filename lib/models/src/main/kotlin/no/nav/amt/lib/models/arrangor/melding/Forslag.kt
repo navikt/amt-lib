@@ -67,8 +67,9 @@ data class Forslag(
     ) : Endring
 
     data class AvsluttDeltakelse(
-        val sluttdato: LocalDate,
+        val sluttdato: LocalDate?,
         val aarsak: EndringAarsak,
+        val harDeltatt: Boolean?,
     ) : Endring
 
     data class IkkeAktuell(
