@@ -5,20 +5,57 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.LoggerFactory
 
-class Producer(private val kafkaConfig: KafkaConfig, private val topic: String) {
+class Producer<K, V>(
+    kafkaConfig: KafkaConfig,
+) {
     private val log = LoggerFactory.getLogger(javaClass)
+    private val producer = KafkaProducer<K, V>(kafkaConfig.producerConfig())
 
-    fun <K, V> produce(key: K, value: V) {
-        val record = ProducerRecord(topic, key, value)
+    init {
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                log.info("Shutting down Kafka producer...")
+                producer.close()
+            },
+        )
+    }
 
-        KafkaProducer<K, V>(kafkaConfig.producerConfig()).use {
-            val metadata = it.send(record).get()
-            log.info(
-                "Produserte melding til topic ${metadata.topic()}, " +
-                    "key=${record.key()}, " +
-                    "offset=${metadata.offset()}, " +
-                    "partition=${metadata.partition()}",
-            )
-        }
+    fun produce(
+        topic: String,
+        key: K,
+        value: V,
+    ) {
+        val record = ProducerRecord(
+            topic,
+            key,
+            value,
+        )
+
+        val metadata = producer.send(record).get()
+
+        log.info(
+            "Produserte melding til topic ${metadata.topic()}, " +
+                "key=$key, " +
+                "offset=${metadata.offset()}, " +
+                "partition=${metadata.partition()}",
+        )
+    }
+
+    fun tombstone(topic: String, key: K) {
+        val value: V? = null
+        val record = ProducerRecord(
+            topic,
+            key,
+            value,
+        )
+
+        val metadata = producer.send(record).get()
+
+        log.info(
+            "Produserte tombstone til topic ${metadata.topic()}, " +
+                "key=$key, " +
+                "offset=${metadata.offset()}, " +
+                "partition=${metadata.partition()}",
+        )
     }
 }

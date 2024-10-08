@@ -4,7 +4,7 @@ import no.nav.amt.lib.testing.utils.ContainerReuseConfig
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.AdminClientConfig
 import org.slf4j.LoggerFactory
-import org.testcontainers.containers.KafkaContainer
+import org.testcontainers.kafka.KafkaContainer
 import org.testcontainers.utility.DockerImageName
 
 object SingletonKafkaProvider {
@@ -22,7 +22,7 @@ object SingletonKafkaProvider {
 
         log.info("Starting new Kafka Instance...")
 
-        kafkaContainer = KafkaContainer(DockerImageName.parse(getKafkaImage()))
+        kafkaContainer = KafkaContainer(DockerImageName.parse("apache/kafka"))
         kafkaContainer!!.withReuse(reuseConfig.reuse)
         kafkaContainer!!.withLabel("reuse.UUID", reuseConfig.reuseLabel)
         kafkaContainer!!.start()
@@ -62,14 +62,5 @@ object SingletonKafkaProvider {
                 log.warn("Could not delete topic $it", e)
             }
         }
-    }
-
-    private fun getKafkaImage(): String {
-        val tag = when (System.getProperty("os.arch")) {
-            "aarch64" -> "7.6.0-2-ubi8.arm64"
-            else -> "7.6.0"
-        }
-
-        return "confluentinc/cp-kafka:$tag"
     }
 }
