@@ -93,13 +93,12 @@ object SingletonPostgresContainer {
                 queryOf("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
                     .map { it.string("table_name") }
                     .asList,
-            ).filterNot { table -> table == "flyway_schema_history" }
+            )
 
         it.transaction { tx ->
             tables.forEach { table ->
-                val sql = "truncate table $table cascade"
-                log.info("Truncating table $table...")
-                tx.run(queryOf(sql).asExecute)
+                log.info("Dropping table $table...")
+                tx.run(queryOf("drop table $table cascade").asExecute)
             }
         }
     }
