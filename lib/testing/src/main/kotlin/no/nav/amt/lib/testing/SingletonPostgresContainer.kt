@@ -70,6 +70,7 @@ object SingletonPostgresContainer {
         container.addEnv("TZ", "Europe/Oslo")
         container.withReuse(reuseConfig.reuse)
         container.withLabel("reuse.UUID", reuseConfig.reuseLabel)
+        container.withCommand("postgres", "-c", "wal_level=logical")
         return container.waitingFor(HostPortWaitStrategy())
     }
 
