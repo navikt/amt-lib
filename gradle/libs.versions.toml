@@ -13,7 +13,7 @@ hikari-version = "6.0.0"
 kotliquery-version = "1.9.0"
 postgres-version = "42.7.4"
 kotlin-version = "2.0.21"
-jackson-version = "2.18.0"
+jackson-version = "2.18.1"
 
 [libraries]
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter-engine" }
