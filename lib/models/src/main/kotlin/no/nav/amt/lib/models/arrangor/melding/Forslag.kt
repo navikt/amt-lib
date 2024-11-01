@@ -79,6 +79,7 @@ data class Forslag(
     data class Deltakelsesmengde(
         val deltakelsesprosent: Int,
         val dagerPerUke: Int?,
+        val gyldigFra: LocalDate?,
     ) : Endring
 
     data class Startdato(
