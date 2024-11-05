@@ -15,16 +15,19 @@ data class Deltakelsesmengde(
 
 fun DeltakerEndring.toDeltakelsesmengde(): Deltakelsesmengde? {
     val endring = this.endring
+
     if (endring is DeltakerEndring.Endring.EndreDeltakelsesmengde) {
-        return Deltakelsesmengde(
-            deltakelsesprosent = endring.deltakelsesprosent ?: 100F,
-            dagerPerUke = endring.dagerPerUke,
-            gyldigFra = endring.gyldigFra ?: this.endret.toLocalDate(),
-            opprettet = this.endret,
-        )
+        return endring.toDeltakelsesmengde(this.endret)
     }
     return null
 }
+
+fun DeltakerEndring.Endring.EndreDeltakelsesmengde.toDeltakelsesmengde(opprettet: LocalDateTime) = Deltakelsesmengde(
+    deltakelsesprosent = this.deltakelsesprosent ?: 100F,
+    dagerPerUke = this.dagerPerUke,
+    gyldigFra = this.gyldigFra ?: opprettet.toLocalDate(),
+    opprettet = opprettet,
+)
 
 fun Vedtak.toDeltakelsesmengde() = Deltakelsesmengde(
     deltakelsesprosent = this.deltakerVedVedtak.deltakelsesprosent ?: 100F,
