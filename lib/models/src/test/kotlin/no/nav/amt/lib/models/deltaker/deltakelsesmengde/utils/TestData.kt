@@ -16,8 +16,8 @@ object TestData {
     fun lagVedtak(
         deltakelsesprosent: Float? = 100F,
         dagerPerUke: Float? = 5F,
-        fattet: LocalDateTime = LocalDateTime.now(),
-        opprettet: LocalDateTime = fattet,
+        fattet: LocalDateTime? = LocalDateTime.now(),
+        opprettet: LocalDateTime = fattet ?: LocalDateTime.now(),
         deltakerId: UUID = UUID.randomUUID(),
     ) = Vedtak(
         id = UUID.randomUUID(),

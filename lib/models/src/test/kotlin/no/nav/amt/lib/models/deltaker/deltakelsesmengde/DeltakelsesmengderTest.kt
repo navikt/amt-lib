@@ -36,6 +36,37 @@ class DeltakelsesmengderTest {
     }
 
     @Test
+    fun `Deltakelsesmengder - tidligere gjeldende og fremtidig - returnerer riktig deltakelsesmengder`() {
+        val gjeldende = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 100,
+            gyldigFra = LocalDate.now(),
+            opprettet = LocalDate.now().atStartOfDay(),
+        )
+
+        val tidligere = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 80,
+            gyldigFra = LocalDate.now().minusDays(1),
+            opprettet = LocalDate.now().minusDays(1).atStartOfDay(),
+        )
+
+        val fremtidig = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 90,
+            gyldigFra = LocalDate.now().plusDays(1),
+            opprettet = LocalDate.now().atStartOfDay(),
+        )
+
+        val endringer = listOf(tidligere, gjeldende, fremtidig)
+
+        val historikk = TestData.lagDeltakerHistorikk(
+            endringer = endringer,
+        )
+
+        val deltakelsesmengder = historikk.toDeltakelsesmengder()
+
+        deltakelsesmengder shouldBe endringer.map { it.toDeltakelsesmengde() }
+    }
+
+    @Test
     fun `Deltakelsesmengder - ingen overlappende deltakelsesmengder`() {
         val endringer = listOf(
             TestData.lagEndreDeltakelsesmengde(
@@ -369,6 +400,69 @@ class DeltakelsesmengderTest {
         val deltakelsesmengder = historikk.toDeltakelsesmengder()
 
         deltakelsesmengder.gjeldende shouldBe null
+    }
+
+    @Test
+    fun `gjeldende - ikke fattet vedtak - returnerer deltakelsesmengde`() {
+        val fremtidig = TestData.lagVedtak(
+            deltakelsesprosent = 90F,
+            fattet = null,
+            opprettet = LocalDate.now().atStartOfDay(),
+        )
+
+        val historikk = TestData.lagDeltakerHistorikk(
+            vedtak = listOf(fremtidig),
+        )
+
+        val deltakelsesmengder = historikk.toDeltakelsesmengder()
+
+        deltakelsesmengder.gjeldende shouldBe fremtidig.toDeltakelsesmengde()
+    }
+
+    @Test
+    fun `nesteGjeldende - bare 1 mengde - returnerer null`() {
+        val endring = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 90,
+            gyldigFra = LocalDate.now(),
+            opprettet = LocalDate.now().atStartOfDay(),
+        )
+
+        val historikk = TestData.lagDeltakerHistorikk(
+            endringer = listOf(endring),
+        )
+
+        val deltakelsesmengder = historikk.toDeltakelsesmengder()
+
+        deltakelsesmengder.nesteGjeldende shouldBe null
+    }
+
+    @Test
+    fun `nesteGjeldende - fremtidig mengde - returnerer riktig deltakelsesmengde`() {
+        val gjeldende = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 100,
+            gyldigFra = LocalDate.now(),
+            opprettet = LocalDate.now().atStartOfDay(),
+        )
+
+        val tidligere = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 80,
+            gyldigFra = LocalDate.now().minusDays(1),
+            opprettet = LocalDate.now().minusDays(1).atStartOfDay(),
+        )
+
+        val fremtidig = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 90,
+            gyldigFra = LocalDate.now().plusDays(1),
+            opprettet = LocalDate.now().atStartOfDay(),
+        )
+
+        val historikk = TestData.lagDeltakerHistorikk(
+            endringer = listOf(tidligere, gjeldende, fremtidig),
+        )
+
+        val deltakelsesmengder = historikk.toDeltakelsesmengder()
+
+        deltakelsesmengder.nesteGjeldende shouldBe fremtidig.toDeltakelsesmengde()
     }
 }
 

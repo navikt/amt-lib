@@ -6,9 +6,20 @@ import java.time.LocalDate
 class Deltakelsesmengder(
     mengder: List<Deltakelsesmengde>,
 ) : List<Deltakelsesmengde> {
-    private val deltakelsesmengder = finnGyldigeDeltakelsesmengder(mengder.sortedByDescending { it.opprettet })
+    private val deltakelsesmengder = finnGyldigeDeltakelsesmengder(sorterMengder(mengder))
 
     val gjeldende = deltakelsesmengder.lastOrNull { it.gyldigFra <= LocalDate.now() }
+
+    val nesteGjeldende: Deltakelsesmengde?
+        get() {
+            val nesteGjeldendeIndex = deltakelsesmengder.indexOf(gjeldende) + 1
+
+            if (deltakelsesmengder.size > nesteGjeldendeIndex) {
+                return deltakelsesmengder[nesteGjeldendeIndex]
+            }
+
+            return null
+        }
 
     fun periode(fraOgMed: LocalDate, tilOgMed: LocalDate?): List<Deltakelsesmengde> {
         val initialDeltakelsesmengde = deltakelsesmengder
