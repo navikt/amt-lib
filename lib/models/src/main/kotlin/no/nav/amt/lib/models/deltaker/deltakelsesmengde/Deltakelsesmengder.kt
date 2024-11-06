@@ -64,6 +64,11 @@ class Deltakelsesmengder(
         return deltakelsesmengder
     }
 
+    private fun sorterMengder(mengder: List<Deltakelsesmengde>): List<Deltakelsesmengde> = mengder.sortedWith(
+        compareByDescending<Deltakelsesmengde> { it.opprettet }
+            .thenByDescending { it.gyldigFra },
+    )
+
     override fun equals(other: Any?): Boolean = if (other != null && other is Deltakelsesmengder) {
         this.deltakelsesmengder == other.deltakelsesmengder
     } else {
