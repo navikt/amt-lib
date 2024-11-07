@@ -41,8 +41,13 @@ class Deltakelsesmengder(
     }
 
     fun validerNyDeltakelsesmengde(deltakelsesmengde: Deltakelsesmengde): Boolean {
-        val nyeDeltakelsesmengder = Deltakelsesmengder(deltakelsesmengder + deltakelsesmengde)
-        return nyeDeltakelsesmengder != this
+        val siste = deltakelsesmengder.lastOrNull() ?: return true
+
+        return if (siste.dagerPerUke != deltakelsesmengde.dagerPerUke || siste.deltakelsesprosent != deltakelsesmengde.deltakelsesprosent) {
+            true
+        } else {
+            deltakelsesmengde.gyldigFra < siste.gyldigFra
+        }
     }
 
     private fun finnGyldigeDeltakelsesmengder(
