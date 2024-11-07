@@ -3,6 +3,12 @@ package no.nav.amt.lib.models.deltaker.deltakelsesmengde
 import no.nav.amt.lib.models.deltaker.DeltakerHistorikk
 import java.time.LocalDate
 
+/**
+ * Deltakelsesmengder er en liste av alle gyldige deltakelsesmengder, både frem og tilbake i tid, den er sortert på gyldig-fra stigende.
+ *
+ * Gitt en liste med flere overlappende endringen via konstruktøren eller `List<DeltakerHistorikk>.toDeltakelsesmengder()`
+ * produserer denne en sortert liste hvor de endringene som har blitt invalidert av andre endringer er filtrert vekk.
+ */
 class Deltakelsesmengder(
     mengder: List<Deltakelsesmengde>,
 ) : List<Deltakelsesmengde> {
@@ -21,6 +27,9 @@ class Deltakelsesmengder(
             return null
         }
 
+    /**
+     * Finner hvilke deltakelsesmengder som var gjeldende for perioden f.o.m. t.o.m.
+     */
     fun periode(fraOgMed: LocalDate, tilOgMed: LocalDate?): List<Deltakelsesmengde> {
         val initialDeltakelsesmengde = deltakelsesmengder
             .filter { it.gyldigFra <= fraOgMed }
@@ -40,6 +49,9 @@ class Deltakelsesmengder(
         return listOfNotNull(initialDeltakelsesmengde) + endringerIPerioden
     }
 
+    /**
+     * Validerer om ny deltakelsesmengde fører til en endring av gjeldende deltakelsesmengder for hele deltakelsen eller ikke.
+     */
     fun validerNyDeltakelsesmengde(deltakelsesmengde: Deltakelsesmengde): Boolean {
         val siste = deltakelsesmengder.lastOrNull() ?: return true
 
@@ -66,6 +78,11 @@ class Deltakelsesmengder(
         )
     }
 
+    /**
+     * Hvis deltakelsesmengden er lik forrige, men har en senere gyldig-fra så trenger vi ikke å beholde den.
+     *
+     * Dette burde ikke være nødvendig om man validerer deltakelsesmengdene riktig.
+     */
     private fun mergePerioder(
         periode: Deltakelsesmengde,
         deltakelsesmengder: MutableList<Deltakelsesmengde>,
@@ -80,6 +97,9 @@ class Deltakelsesmengder(
         return deltakelsesmengder
     }
 
+    /**
+     * Man må sorterer på opprettet her for at `finnGyldigeDeltakelsesmengde` skal gi riktig svar.
+     */
     private fun sorterMengder(mengder: List<Deltakelsesmengde>): List<Deltakelsesmengde> = mengder.sortedWith(
         compareByDescending<Deltakelsesmengde> { it.opprettet }
             .thenByDescending { it.gyldigFra },
