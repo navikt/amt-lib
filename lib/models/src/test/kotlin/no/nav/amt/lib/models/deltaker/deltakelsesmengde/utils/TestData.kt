@@ -1,5 +1,6 @@
 package no.nav.amt.lib.models.deltaker.deltakelsesmengde.utils
 
+import no.nav.amt.lib.models.arrangor.melding.EndringFraArrangor
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
 import no.nav.amt.lib.models.deltaker.DeltakerHistorikk
@@ -77,11 +78,15 @@ object TestData {
         endringer: List<DeltakerEndring> = emptyList(),
         forslag: List<Forslag> = emptyList(),
         importertFraArena: List<ImportertFraArena> = emptyList(),
+        endringerFraArrangor: List<EndringFraArrangor> = emptyList(),
     ) = emptyList<DeltakerHistorikk>()
+        .asSequence()
         .plus(vedtak.map { DeltakerHistorikk.Vedtak(it) })
         .plus(endringer.map { DeltakerHistorikk.Endring(it) })
         .plus(forslag.map { DeltakerHistorikk.Forslag(it) })
         .plus(importertFraArena.map { DeltakerHistorikk.ImportertFraArena(it) })
+        .plus(endringerFraArrangor.map { DeltakerHistorikk.EndringFraArrangor(it) })
+        .toList()
 
     fun lagEndreDeltakelsesmengde(
         deltakelsesprosent: Int?,
@@ -95,6 +100,33 @@ object TestData {
             deltakelsesprosent = deltakelsesprosent?.toFloat(),
             dagerPerUke = dagerPerUke?.toFloat(),
             gyldigFra = gyldigFra,
+            begrunnelse = null,
+        ),
+        endret = opprettet,
+    )
+
+    fun lagLeggTilOppstartsdato(
+        startdato: LocalDate = LocalDate.now(),
+        sluttdato: LocalDate = startdato.plusMonths(3),
+        opprettet: LocalDateTime = LocalDateTime.now(),
+        deltakerId: UUID = UUID.randomUUID(),
+    ) = EndringFraArrangor(
+        id = UUID.randomUUID(),
+        deltakerId = deltakerId,
+        opprettetAvArrangorAnsattId = UUID.randomUUID(),
+        opprettet = opprettet,
+        endring = EndringFraArrangor.LeggTilOppstartsdato(startdato, sluttdato),
+    )
+
+    fun lagEndreStartdato(
+        startdato: LocalDate,
+        opprettet: LocalDateTime,
+        deltakerId: UUID = UUID.randomUUID(),
+    ) = lagDeltakerEndring(
+        deltakerId = deltakerId,
+        endring = DeltakerEndring.Endring.EndreStartdato(
+            startdato = startdato,
+            sluttdato = startdato.plusMonths(3),
             begrunnelse = null,
         ),
         endret = opprettet,
