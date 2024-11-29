@@ -13,12 +13,12 @@ import java.time.LocalDate
  */
 class Deltakelsesmengder(
     mengder: List<Deltakelsesmengde>,
-    private val startdatoer: List<LocalDate> = emptyList(),
+    startdatoer: List<LocalDate> = emptyList(),
 ) : List<Deltakelsesmengde> {
     private val deltakelsesmengder = mengder
         .let(::sorterMengder)
         .let(::finnGyldigeDeltakelsesmengder)
-        .let(::avgrensTilSisteStartdato)
+        .let { avgrensPeriodeTilSisteStartdato(it, startdatoer) }
 
     val gjeldende = deltakelsesmengder.lastOrNull { it.gyldigFra <= LocalDate.now() }
 
@@ -68,13 +68,19 @@ class Deltakelsesmengder(
         return deltakelsesmengder
     }
 
+    fun avgrensPeriodeTilStartdato(startdato: LocalDate?): Deltakelsesmengder =
+        Deltakelsesmengder(deltakelsesmengder, listOfNotNull(startdato))
+
     /**
      * Perioder skal ikke ha en gyldig fra før startdato til deltaker.
      *
      * Hvis startdato endres tilbake i tid skal den deltakelsesmengden som var gjeldende før startdatoendringen
-     * ha en gyldig fra lik ny startdato, selv om det kan finnes en gyldig deltakelsesmengde som er før den gjeldene
+     * ha en gyldig fra lik ny startdato, selv om det kan finnes en gyldig deltakelsesmengde som er før den gjeldende
      */
-    private fun avgrensTilSisteStartdato(deltakelsesmengder: List<Deltakelsesmengde>): List<Deltakelsesmengde> {
+    private fun avgrensPeriodeTilSisteStartdato(
+        deltakelsesmengder: List<Deltakelsesmengde>,
+        startdatoer: List<LocalDate>,
+    ): List<Deltakelsesmengde> {
         if (deltakelsesmengder.isEmpty() || startdatoer.isEmpty()) return deltakelsesmengder
 
         return startdatoer.fold(deltakelsesmengder) { periode, startdato -> justerGyldigFra(periode, startdato) }
@@ -83,7 +89,7 @@ class Deltakelsesmengder(
     private fun justerGyldigFra(deltakelsesmengder: List<Deltakelsesmengde>, startdato: LocalDate): List<Deltakelsesmengde> {
         val periode = periode(deltakelsesmengder = deltakelsesmengder, startdato, null).toMutableList()
 
-        val justert = periode.first().copy(gyldigFra = startdato)
+        val justert = periode.firstOrNull()?.copy(gyldigFra = startdato) ?: return periode
 
         periode[0] = justert
 
