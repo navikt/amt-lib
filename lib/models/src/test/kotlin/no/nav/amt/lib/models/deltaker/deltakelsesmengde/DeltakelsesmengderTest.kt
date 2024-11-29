@@ -386,7 +386,7 @@ class DeltakelsesmengderTest {
     }
 
     @Test
-    fun `gjeldende - bare fremtidige - returnerer null`() {
+    fun `gjeldende - bare fremtidige - returnerer første`() {
         val fremtidig = TestData.lagEndreDeltakelsesmengde(
             deltakelsesprosent = 90,
             gyldigFra = LocalDate.now().plusDays(1),
@@ -399,7 +399,8 @@ class DeltakelsesmengderTest {
 
         val deltakelsesmengder = historikk.toDeltakelsesmengder()
 
-        deltakelsesmengder.gjeldende shouldBe null
+        deltakelsesmengder.gjeldende shouldBe fremtidig.toDeltakelsesmengde()
+        deltakelsesmengder.nesteGjeldende shouldBe null
     }
 
     @Test
