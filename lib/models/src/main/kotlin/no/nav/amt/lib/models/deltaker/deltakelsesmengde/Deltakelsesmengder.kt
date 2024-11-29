@@ -20,7 +20,7 @@ class Deltakelsesmengder(
         .let(::finnGyldigeDeltakelsesmengder)
         .let { avgrensPeriodeTilSisteStartdato(it, startdatoer) }
 
-    val gjeldende = deltakelsesmengder.lastOrNull { it.gyldigFra <= LocalDate.now() }
+    val gjeldende = deltakelsesmengder.lastOrNull { it.gyldigFra <= LocalDate.now() } ?: deltakelsesmengder.firstOrNull()
 
     val nesteGjeldende: Deltakelsesmengde?
         get() {
