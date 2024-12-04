@@ -33,6 +33,28 @@ class Deltakelsesmengder(
             return null
         }
 
+    fun avgrensPeriodeTilStartdato(startdato: LocalDate?): Deltakelsesmengder =
+        Deltakelsesmengder(deltakelsesmengder, listOfNotNull(startdato))
+
+    /**
+     * Finner hvilke deltakelsesmengder som var gjeldende for perioden f.o.m. t.o.m.
+     */
+    fun periode(fraOgMed: LocalDate, tilOgMed: LocalDate?): Deltakelsesmengder =
+        Deltakelsesmengder(periode(deltakelsesmengder, fraOgMed, tilOgMed))
+
+    /**
+     * Validerer om ny deltakelsesmengde fører til en endring av gjeldende deltakelsesmengder for hele deltakelsen eller ikke.
+     */
+    fun validerNyDeltakelsesmengde(deltakelsesmengde: Deltakelsesmengde): Boolean {
+        val siste = deltakelsesmengder.lastOrNull() ?: return true
+
+        return if (siste.dagerPerUke != deltakelsesmengde.dagerPerUke || siste.deltakelsesprosent != deltakelsesmengde.deltakelsesprosent) {
+            true
+        } else {
+            deltakelsesmengde.gyldigFra < siste.gyldigFra
+        }
+    }
+
     private fun finnGyldigeDeltakelsesmengder(
         deltakelsesmengder: List<Deltakelsesmengde>,
         gyldigeDeltakelsesmengder: MutableList<Deltakelsesmengde> = mutableListOf(),
@@ -68,8 +90,6 @@ class Deltakelsesmengder(
         return deltakelsesmengder
     }
 
-    fun avgrensPeriodeTilStartdato(startdato: LocalDate?): Deltakelsesmengder =
-        Deltakelsesmengder(deltakelsesmengder, listOfNotNull(startdato))
 
     /**
      * Perioder skal ikke ha en gyldig fra før startdato til deltaker.
@@ -96,11 +116,6 @@ class Deltakelsesmengder(
         return periode
     }
 
-    /**
-     * Finner hvilke deltakelsesmengder som var gjeldende for perioden f.o.m. t.o.m.
-     */
-    fun periode(fraOgMed: LocalDate, tilOgMed: LocalDate?): List<Deltakelsesmengde> = periode(deltakelsesmengder, fraOgMed, tilOgMed)
-
     private fun periode(
         deltakelsesmengder: List<Deltakelsesmengde>,
         fraOgMed: LocalDate,
@@ -122,19 +137,6 @@ class Deltakelsesmengder(
             }
 
         return listOfNotNull(initialDeltakelsesmengde) + endringerIPerioden
-    }
-
-    /**
-     * Validerer om ny deltakelsesmengde fører til en endring av gjeldende deltakelsesmengder for hele deltakelsen eller ikke.
-     */
-    fun validerNyDeltakelsesmengde(deltakelsesmengde: Deltakelsesmengde): Boolean {
-        val siste = deltakelsesmengder.lastOrNull() ?: return true
-
-        return if (siste.dagerPerUke != deltakelsesmengde.dagerPerUke || siste.deltakelsesprosent != deltakelsesmengde.deltakelsesprosent) {
-            true
-        } else {
-            deltakelsesmengde.gyldigFra < siste.gyldigFra
-        }
     }
 
     /**
