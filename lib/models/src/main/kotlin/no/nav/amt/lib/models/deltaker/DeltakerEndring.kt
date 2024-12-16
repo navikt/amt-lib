@@ -91,7 +91,6 @@ data class DeltakerEndring(
         ) : Endring()
 
         data class FjernOppstartsdato(
-            val fjernet: LocalDateTime,
             val begrunnelse: String,
         ) : Endring()
     }
