@@ -30,6 +30,15 @@ class ManagedKafkaConsumer<K, V>(
 
     val status: ConsumerStatus = ConsumerStatus()
 
+    init {
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                log.info("Shutting down Kafka consumer")
+                stop()
+            },
+        )
+    }
+
     fun run() = scope.launch {
         log.info("Starting consumer for topic: $topic")
         running = true
