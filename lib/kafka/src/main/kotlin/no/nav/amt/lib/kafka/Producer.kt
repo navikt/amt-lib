@@ -4,9 +4,11 @@ import no.nav.amt.lib.kafka.config.KafkaConfig
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.LoggerFactory
+import java.time.Duration
 
 class Producer<K, V>(
     kafkaConfig: KafkaConfig,
+    gracePeriodMillis: Long = 1000
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val producer = KafkaProducer<K, V>(kafkaConfig.producerConfig())
@@ -14,7 +16,8 @@ class Producer<K, V>(
     init {
         Runtime.getRuntime().addShutdownHook(
             Thread {
-                log.info("Shutting down Kafka producer...")
+                log.info("Shutting down Kafka producer in $gracePeriodMillis milliseconds...")
+                Thread.sleep(Duration.ofMillis(gracePeriodMillis))
                 producer.close()
             },
         )
