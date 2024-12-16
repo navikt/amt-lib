@@ -95,6 +95,8 @@ data class Forslag(
         val aarsak: EndringAarsak,
     ) : Endring
 
+    data object FjernOppstartsdato : Endring
+
     data class NavAnsatt(
         val id: UUID,
         val enhetId: UUID,

@@ -89,5 +89,9 @@ data class DeltakerEndring(
             val reaktivertDato: LocalDate,
             val begrunnelse: String,
         ) : Endring()
+
+        data class FjernOppstartsdato(
+            val begrunnelse: String,
+        ) : Endring()
     }
 }
