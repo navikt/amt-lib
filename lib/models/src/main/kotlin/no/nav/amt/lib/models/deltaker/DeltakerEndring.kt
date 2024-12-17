@@ -91,7 +91,7 @@ data class DeltakerEndring(
         ) : Endring()
 
         data class FjernOppstartsdato(
-            val begrunnelse: String,
+            val begrunnelse: String?,
         ) : Endring()
     }
 }
