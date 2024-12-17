@@ -39,7 +39,7 @@ object TestData {
         opprettet = opprettet,
         opprettetAv = UUID.randomUUID(),
         opprettetAvEnhet = UUID.randomUUID(),
-        sistEndret = LocalDateTime.now(),
+        sistEndret = opprettet,
         sistEndretAv = UUID.randomUUID(),
         sistEndretAvEnhet = UUID.randomUUID(),
     )

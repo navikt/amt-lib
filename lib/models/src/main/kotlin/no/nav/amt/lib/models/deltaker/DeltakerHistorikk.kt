@@ -14,7 +14,7 @@ sealed class DeltakerHistorikk {
         }
 
     data class ImportertFraArena(
-        val importertFraArena: no.nav.amt.lib.models.deltaker.ImportertFraArena
+        val importertFraArena: no.nav.amt.lib.models.deltaker.ImportertFraArena,
     ) : DeltakerHistorikk()
 
     data class Endring(
