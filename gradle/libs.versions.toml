@@ -31,7 +31,8 @@ flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway-versi
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway-version" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgres-version" }
 kotliquery = { module = "com.github.seratch:kotliquery", version.ref = "kotliquery-version" }
-jackson = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson-version" }
+jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson-version" }
+jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson-version" }
 
 [plugins]
 jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-version" }

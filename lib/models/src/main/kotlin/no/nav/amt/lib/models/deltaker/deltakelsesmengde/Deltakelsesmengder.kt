@@ -90,7 +90,6 @@ class Deltakelsesmengder(
         return deltakelsesmengder
     }
 
-
     /**
      * Perioder skal ikke ha en gyldig fra før startdato til deltaker.
      *
@@ -178,34 +177,43 @@ class Deltakelsesmengder(
     override fun lastIndexOf(element: Deltakelsesmengde) = deltakelsesmengder.lastIndexOf(element)
 }
 
-fun List<DeltakerHistorikk>.toDeltakelsesmengder() = Deltakelsesmengder(
-    mengder = mapNotNull {
-        when (it) {
-            is DeltakerHistorikk.Endring -> it.endring.toDeltakelsesmengde()
-            is DeltakerHistorikk.EndringFraArrangor -> null
-            is DeltakerHistorikk.Forslag -> null
-            is DeltakerHistorikk.ImportertFraArena -> it.importertFraArena.toDeltakelsesmengde()
-            is DeltakerHistorikk.Vedtak -> it.vedtak.toDeltakelsesmengde()
+fun List<DeltakerHistorikk>.toDeltakelsesmengder(): Deltakelsesmengder {
+    return sortedBy { it.sistEndret }.fold(Deltakelsesmengder(emptyList())) { mengder, historikk ->
+        val deltakelsesmengde = historikk.toDeltakelsesmengde()
+        val startdato = historikk.toStartdato()
+
+        return@fold if (deltakelsesmengde != null) {
+            Deltakelsesmengder(mengder.plus(deltakelsesmengde), listOfNotNull(startdato))
+        } else if (startdato != null) {
+            mengder.avgrensPeriodeTilStartdato(startdato)
+        } else {
+            mengder
         }
-    },
-    startdatoer = sortedBy { it.sistEndret }
-        .mapNotNull {
-            when (it) {
-                is DeltakerHistorikk.Endring -> if (it.endring.endring is DeltakerEndring.Endring.EndreStartdato) {
-                    it.endring.endring.startdato
-                } else {
-                    null
-                }
+    }
+}
 
-                is DeltakerHistorikk.EndringFraArrangor -> if (it.endringFraArrangor.endring is EndringFraArrangor.LeggTilOppstartsdato) {
-                    it.endringFraArrangor.endring.startdato
-                } else {
-                    null
-                }
+private fun DeltakerHistorikk.toDeltakelsesmengde() = when (this) {
+    is DeltakerHistorikk.Endring -> this.endring.toDeltakelsesmengde()
+    is DeltakerHistorikk.EndringFraArrangor -> null
+    is DeltakerHistorikk.Forslag -> null
+    is DeltakerHistorikk.ImportertFraArena -> this.importertFraArena.toDeltakelsesmengde()
+    is DeltakerHistorikk.Vedtak -> this.vedtak.toDeltakelsesmengde()
+}
 
-                is DeltakerHistorikk.Forslag -> null
-                is DeltakerHistorikk.ImportertFraArena -> it.importertFraArena.deltakerVedImport.startdato
-                is DeltakerHistorikk.Vedtak -> it.vedtak.deltakerVedVedtak.startdato
-            }
-        },
-)
+private fun DeltakerHistorikk.toStartdato() = when (this) {
+    is DeltakerHistorikk.Endring -> if (this.endring.endring is DeltakerEndring.Endring.EndreStartdato) {
+        this.endring.endring.startdato
+    } else {
+        null
+    }
+
+    is DeltakerHistorikk.EndringFraArrangor -> if (this.endringFraArrangor.endring is EndringFraArrangor.LeggTilOppstartsdato) {
+        this.endringFraArrangor.endring.startdato
+    } else {
+        null
+    }
+
+    is DeltakerHistorikk.Forslag -> null
+    is DeltakerHistorikk.ImportertFraArena -> this.importertFraArena.deltakerVedImport.startdato
+    is DeltakerHistorikk.Vedtak -> this.vedtak.deltakerVedVedtak.startdato
+}

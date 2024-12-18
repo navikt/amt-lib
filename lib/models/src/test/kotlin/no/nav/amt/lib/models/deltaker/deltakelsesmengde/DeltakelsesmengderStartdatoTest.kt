@@ -192,4 +192,54 @@ class DeltakelsesmengderStartdatoTest {
         deltakelsesmengder.first().gyldigFra shouldBe startdato2
         deltakelsesmengder.first().deltakelsesprosent shouldBe endring.deltakelsesprosent
     }
+
+    @Test
+    fun `startdato endres frem og tilbake i tid - bruker nyeste startdato til å avgrense perioden`() {
+        val vedtak = TestData.lagVedtak(fattet = "2024-10-15".toDateTime())
+        val startdato1 = "2024-10-30".toDate()
+        val startdato2 = "2024-11-10".toDate()
+
+        val ugyldigDeltakelsesmengde = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 42,
+            gyldigFra = "2024-10-29".toDate(),
+            opprettet = "2024-10-29".toDateTime(),
+        )
+
+        val forsteDeltakelsesmengde = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 50,
+            gyldigFra = startdato2,
+            opprettet = "2024-10-30".toDateTime(),
+        )
+
+        val andreDeltakelsesmengde = TestData.lagEndreDeltakelsesmengde(
+            deltakelsesprosent = 51,
+            gyldigFra = "2024-11-01".toDate(),
+            opprettet = "2024-11-09".toDateTime(),
+        )
+
+        val historikk = TestData.lagDeltakerHistorikk(
+            listOf(vedtak),
+            endringerFraArrangor = listOf(
+                TestData.lagLeggTilOppstartsdato(startdato1, opprettet = "2024-10-25".toDateTime()),
+            ),
+            endringer = listOf(
+                TestData.lagEndreStartdato(startdato2, opprettet = "2024-11-07".toDateTime()),
+                TestData.lagEndreStartdato(startdato1, opprettet = "2024-11-08".toDateTime()),
+                ugyldigDeltakelsesmengde,
+                forsteDeltakelsesmengde,
+                andreDeltakelsesmengde,
+            ),
+        )
+
+        val deltakelsesmengder = historikk.toDeltakelsesmengder()
+        deltakelsesmengder.size shouldBe 2
+
+        val deltakelesesmengde1 = forsteDeltakelsesmengde.endring as DeltakerEndring.Endring.EndreDeltakelsesmengde
+        deltakelsesmengder.first().gyldigFra shouldBe startdato1
+        deltakelsesmengder.first().deltakelsesprosent shouldBe deltakelesesmengde1.deltakelsesprosent
+
+        val deltakelsesmengde2 = andreDeltakelsesmengde.endring as DeltakerEndring.Endring.EndreDeltakelsesmengde
+        deltakelsesmengder.last().gyldigFra shouldBe deltakelsesmengde2.gyldigFra
+        deltakelsesmengder.last().deltakelsesprosent shouldBe deltakelsesmengde2.deltakelsesprosent
+    }
 }
