@@ -10,6 +10,4 @@ data class Vurdering(
     override val opprettet: LocalDateTime,
     val vurderingstype: Vurderingstype,
     val begrunnelse: String?,
-    val gyldigFra: LocalDateTime,
-    val gyldigTil: LocalDateTime?
 ) : Melding
