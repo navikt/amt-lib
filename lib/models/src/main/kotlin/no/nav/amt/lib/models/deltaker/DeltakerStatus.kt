@@ -50,4 +50,15 @@ data class DeltakerStatus(
         FULLFORT,
         PABEGYNT_REGISTRERING,
     }
+
+    companion object {
+        val avsluttendeStatuser = setOf(
+            Type.AVBRUTT,
+            Type.AVBRUTT_UTKAST,
+            Type.FEILREGISTRERT,
+            Type.FULLFORT,
+            Type.HAR_SLUTTET,
+            Type.IKKE_AKTUELL,
+        )
+    }
 }
