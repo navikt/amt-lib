@@ -11,7 +11,12 @@ sealed class DeltakerHistorikk {
             is Forslag -> forslag.sistEndret
             is EndringFraArrangor -> endringFraArrangor.opprettet
             is ImportertFraArena -> importertFraArena.importertDato
+            is VurderingFraArrangor -> data.opprettet
         }
+
+    data class VurderingFraArrangor(
+        val data: VurderingFraArrangorData
+    ) : DeltakerHistorikk()
 
     data class ImportertFraArena(
         val importertFraArena: no.nav.amt.lib.models.deltaker.ImportertFraArena,
@@ -39,6 +44,7 @@ sealed class DeltakerHistorikk {
         is Forslag -> listOfNotNull(this.forslag.getNavAnsatt()?.id)
         is EndringFraArrangor -> emptyList()
         is ImportertFraArena -> emptyList()
+        is VurderingFraArrangor -> emptyList()
     }
 
     fun navEnheter() = when (this) {
@@ -47,5 +53,6 @@ sealed class DeltakerHistorikk {
         is Forslag -> listOfNotNull(this.forslag.getNavAnsatt()?.enhetId)
         is EndringFraArrangor -> emptyList()
         is ImportertFraArena -> emptyList()
+        is VurderingFraArrangor -> emptyList()
     }
 }
