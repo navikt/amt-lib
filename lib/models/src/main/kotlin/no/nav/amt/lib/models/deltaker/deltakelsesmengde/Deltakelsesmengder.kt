@@ -198,6 +198,7 @@ private fun DeltakerHistorikk.toDeltakelsesmengde() = when (this) {
     is DeltakerHistorikk.Forslag -> null
     is DeltakerHistorikk.ImportertFraArena -> this.importertFraArena.toDeltakelsesmengde()
     is DeltakerHistorikk.Vedtak -> this.vedtak.toDeltakelsesmengde()
+    is DeltakerHistorikk.VurderingFraArrangor -> null
 }
 
 private fun DeltakerHistorikk.toStartdato() = when (this) {
@@ -216,4 +217,5 @@ private fun DeltakerHistorikk.toStartdato() = when (this) {
     is DeltakerHistorikk.Forslag -> null
     is DeltakerHistorikk.ImportertFraArena -> this.importertFraArena.deltakerVedImport.startdato
     is DeltakerHistorikk.Vedtak -> this.vedtak.deltakerVedVedtak.startdato
+    is DeltakerHistorikk.VurderingFraArrangor -> null
 }
