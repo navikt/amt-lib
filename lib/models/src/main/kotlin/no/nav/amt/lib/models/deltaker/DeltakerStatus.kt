@@ -10,7 +10,6 @@ data class DeltakerStatus(
     val gyldigFra: LocalDateTime,
     val gyldigTil: LocalDateTime?,
     val opprettet: LocalDateTime,
-    val erManueltDeltMedArrangor: Boolean = false,
 ) {
     data class Aarsak(
         val type: Type,
