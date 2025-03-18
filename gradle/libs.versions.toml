@@ -4,7 +4,7 @@
 [versions]
 junit-jupiter-engine = "5.12.1"
 kotest-version = "5.9.1"
-kafka-clients-version = "3.9.0"
+kafka-clients-version = "4.0.0"
 kotlinx-version = "1.10.1"
 logback-version = "1.5.17"
 testcontainers-version = "1.20.6"
