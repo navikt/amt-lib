@@ -16,7 +16,7 @@ data class HendelseDeltaker(
         val arrangor: Arrangor,
         val tiltak: Tiltak,
         val startdato: LocalDate,
-        val sluttdato: LocalDate,
+        val sluttdato: LocalDate?,
         val oppstartstype: Oppstartstype,
     ) {
         data class Arrangor(
