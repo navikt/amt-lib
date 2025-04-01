@@ -15,6 +15,9 @@ data class HendelseDeltaker(
         val navn: String,
         val arrangor: Arrangor,
         val tiltak: Tiltak,
+        val startdato: LocalDate,
+        val sluttdato: LocalDate,
+        val oppstartstype: Oppstartstype,
     ) {
         data class Arrangor(
             val id: UUID,
@@ -29,5 +32,10 @@ data class HendelseDeltaker(
             val ledetekst: String?,
             val tiltakskode: Tiltakstype.Tiltakskode,
         )
+
+        enum class Oppstartstype {
+            LOPENDE,
+            FELLES,
+        }
     }
 }
