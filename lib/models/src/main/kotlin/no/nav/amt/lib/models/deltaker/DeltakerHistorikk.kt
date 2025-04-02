@@ -8,6 +8,7 @@ sealed class DeltakerHistorikk {
         get() = when (this) {
             is Endring -> endring.endret
             is Vedtak -> vedtak.sistEndret
+            is Innsok -> innsok.innsokt
             is Forslag -> forslag.sistEndret
             is EndringFraArrangor -> endringFraArrangor.opprettet
             is ImportertFraArena -> importertFraArena.importertDato
@@ -31,6 +32,10 @@ sealed class DeltakerHistorikk {
         val vedtak: no.nav.amt.lib.models.deltaker.Vedtak,
     ) : DeltakerHistorikk()
 
+    data class Innsok(
+        val innsok: no.nav.amt.lib.models.deltaker.Innsok,
+    ) : DeltakerHistorikk()
+
     data class Forslag(
         val forslag: no.nav.amt.lib.models.arrangor.melding.Forslag,
     ) : DeltakerHistorikk()
@@ -46,6 +51,7 @@ sealed class DeltakerHistorikk {
     fun navAnsatte() = when (this) {
         is Endring -> listOf(this.endring.endretAv)
         is Vedtak -> listOfNotNull(this.vedtak.sistEndretAv, this.vedtak.opprettetAv)
+        is Innsok -> listOfNotNull(this.innsok.innsoktAv)
         is Forslag -> listOfNotNull(this.forslag.getNavAnsatt()?.id)
         is EndringFraArrangor -> emptyList()
         is ImportertFraArena -> emptyList()
@@ -56,6 +62,7 @@ sealed class DeltakerHistorikk {
     fun navEnheter() = when (this) {
         is Endring -> listOf(this.endring.endretAvEnhet)
         is Vedtak -> listOfNotNull(this.vedtak.sistEndretAvEnhet, this.vedtak.opprettetAvEnhet)
+        is Innsok -> listOfNotNull(this.innsok.innsoktAvEnhet)
         is Forslag -> listOfNotNull(this.forslag.getNavAnsatt()?.enhetId)
         is EndringFraArrangor -> emptyList()
         is ImportertFraArena -> emptyList()
