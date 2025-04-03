@@ -15,9 +15,9 @@ data class HendelseDeltaker(
         val navn: String,
         val arrangor: Arrangor,
         val tiltak: Tiltak,
-        val startdato: LocalDate,
-        val sluttdato: LocalDate?,
-        val oppstartstype: Oppstartstype,
+        val startdato: LocalDate? = null, //Må være nullable fordi de benyttes som dbo i amt-distribusjon
+        val sluttdato: LocalDate? = null,
+        val oppstartstype: Oppstartstype? = null, //Må være nullable fordi de benyttes som dbo i amt-distribusjon
     ) {
         data class Arrangor(
             val id: UUID,
