@@ -15,4 +15,6 @@ data class EndringFraTiltakskoordinator(
     sealed interface Endring
 
     data object DelMedArrangor : Endring
+    data object SettPaaVenteliste : Endring
+
 }
