@@ -35,6 +35,7 @@ data class Tiltakstype(
         VARIG_TILRETTELAGT_ARBEID_SKJERMET,
         ;
 
+        @Deprecated("Utrygg sjekk av kurstiltak. Må erstattes med å sjekke oppstartstype på tiltak")
         fun erKurs() = this in kursTiltak
 
         fun toArenaKode() = when (this) {
@@ -58,6 +59,7 @@ data class Tiltakstype(
         )
     }
 
+    @Deprecated("Utrygg sjekk av kurstiltak. Må erstattes med å sjekke oppstartstype på tiltak")
     fun erKurs() = this.tiltakskode.erKurs()
 
     val harDeltakelsesmengde = tiltakskode in setOf(Tiltakskode.ARBEIDSFORBEREDENDE_TRENING, Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET)
