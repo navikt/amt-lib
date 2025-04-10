@@ -31,6 +31,8 @@ data class DeltakerStatus(
             AVLYST_KONTRAKT,
             UTDANNING,
             SAMARBEIDET_MED_ARRANGOREN_ER_AVBRUTT,
+            KRAV_IKKE_OPPFYLT,
+            KURS_FULLT
         }
     }
 
