@@ -17,4 +17,5 @@ data class EndringFraTiltakskoordinator(
     data object DelMedArrangor : Endring
     data object SettPaaVenteliste : Endring
     data object TildelPlass : Endring
+
 }
