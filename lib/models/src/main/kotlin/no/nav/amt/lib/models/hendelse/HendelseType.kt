@@ -17,6 +17,8 @@ sealed interface HendelseType {
 
     sealed interface HendelseSystemKanOpprette : HendelseType
 
+    sealed class SettPaaVenteliste : HendelseType
+
     data class OpprettUtkast(
         val utkast: UtkastDto,
     ) : HendelseType
