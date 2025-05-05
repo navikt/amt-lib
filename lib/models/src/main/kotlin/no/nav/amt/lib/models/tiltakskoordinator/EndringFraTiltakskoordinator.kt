@@ -9,13 +9,15 @@ data class EndringFraTiltakskoordinator(
     val deltakerId: UUID,
     val endring: Endring,
     val endretAv: UUID,
+    val endretAvEnhet: UUID? = null,
     val endret: LocalDateTime,
 ) {
     @JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
     sealed interface Endring
 
     data object DelMedArrangor : Endring
-    data object SettPaaVenteliste : Endring
-    data object TildelPlass : Endring
 
+    data object SettPaaVenteliste : Endring
+
+    data object TildelPlass : Endring
 }
