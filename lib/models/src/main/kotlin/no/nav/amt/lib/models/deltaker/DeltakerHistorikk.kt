@@ -67,6 +67,6 @@ sealed class DeltakerHistorikk {
         is EndringFraArrangor -> emptyList()
         is ImportertFraArena -> emptyList()
         is VurderingFraArrangor -> emptyList()
-        is EndringFraTiltakskoordinator -> emptyList()
+        is EndringFraTiltakskoordinator -> listOf(this.endringFraTiltakskoordinator.endretAvEnhet)
     }
 }
