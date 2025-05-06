@@ -9,6 +9,7 @@ data class HendelseDeltaker(
     val personident: String,
     val deltakerliste: Deltakerliste,
     val forsteVedtakFattet: LocalDate?,
+    val opprettetDato: LocalDate?,
 ) {
     data class Deltakerliste(
         val id: UUID,
