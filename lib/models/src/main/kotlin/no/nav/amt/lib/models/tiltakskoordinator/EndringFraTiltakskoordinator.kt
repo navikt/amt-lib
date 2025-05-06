@@ -9,7 +9,7 @@ data class EndringFraTiltakskoordinator(
     val deltakerId: UUID,
     val endring: Endring,
     val endretAv: UUID,
-    val endretAvEnhet: UUID? = null,
+    val endretAvEnhet: UUID,
     val endret: LocalDateTime,
 ) {
     @JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
