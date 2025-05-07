@@ -20,4 +20,26 @@ data class EndringFraTiltakskoordinator(
     data object SettPaaVenteliste : Endring
 
     data object TildelPlass : Endring
+
+    data class Avslag(
+        val aarsak: Aarsak,
+        val begrunnelse: String?,
+    ) : Endring {
+        data class Aarsak(
+            val type: Type,
+            val beskrivelse: String? = null,
+        ) {
+            init {
+                if (beskrivelse != null && type != Type.ANNET) {
+                    error("Aarsak $type skal ikke ha beskrivelse")
+                }
+            }
+
+            enum class Type {
+                KURS_FULLT,
+                KRAV_IKKE_OPPFYLT,
+                ANNET,
+            }
+        }
+    }
 }
