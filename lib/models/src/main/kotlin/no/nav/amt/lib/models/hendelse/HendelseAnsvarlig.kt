@@ -14,6 +14,7 @@ sealed interface HendelseAnsvarlig {
         data class Enhet(
             val id: UUID,
             val enhetsnummer: String,
+            val navn: String,
         )
     }
 
