@@ -5,6 +5,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
+/*
+    Datastruktur for arrangor-melding-v1 topic
+ */
 data class Forslag(
     override val id: UUID,
     override val deltakerId: UUID,
@@ -70,6 +73,7 @@ data class Forslag(
         val sluttdato: LocalDate?,
         val aarsak: EndringAarsak,
         val harDeltatt: Boolean?,
+        val harFullfort: Boolean?,
     ) : Endring
 
     data class IkkeAktuell(
