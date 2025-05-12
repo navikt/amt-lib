@@ -71,7 +71,7 @@ data class Forslag(
 
     data class AvsluttDeltakelse(
         val sluttdato: LocalDate?,
-        val aarsak: EndringAarsak,
+        val aarsak: EndringAarsak?,
         val harDeltatt: Boolean?,
         val harFullfort: Boolean?,
     ) : Endring
