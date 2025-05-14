@@ -3,7 +3,9 @@ package no.nav.amt.lib.models.hendelse
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import no.nav.amt.lib.models.arrangor.melding.EndringFraArrangor
 import no.nav.amt.lib.models.arrangor.melding.Forslag
+import no.nav.amt.lib.models.arrangor.melding.Vurderingstype
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
+import no.nav.amt.lib.models.tiltakskoordinator.EndringFraTiltakskoordinator
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -18,7 +20,19 @@ sealed interface HendelseType {
     sealed interface HendelseSystemKanOpprette : HendelseType
 
     data object SettPaaVenteliste : HendelseType
-    data object TildelPlass: HendelseType
+
+    data object TildelPlass : HendelseType
+
+    data class Avslag(
+        val aarsak: EndringFraTiltakskoordinator.Avslag.Aarsak,
+        val begrunnelseFraNav: String?,
+        val vurderingFraArrangor: Vurdering?,
+    ) : HendelseType {
+        data class Vurdering(
+            val vurderingstype: Vurderingstype,
+            val begrunnelse: String?,
+        )
+    }
 
     data class OpprettUtkast(
         val utkast: UtkastDto,
