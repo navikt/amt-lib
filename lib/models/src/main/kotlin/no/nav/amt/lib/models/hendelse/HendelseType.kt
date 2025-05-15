@@ -108,6 +108,14 @@ sealed interface HendelseType {
         override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
+    data class AvbrytDeltakelse(
+        val aarsak: DeltakerEndring.Aarsak?,
+        val sluttdato: LocalDate,
+        override val begrunnelseFraNav: String?,
+        override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
+    ) : HendelseMedForslag
+
     data class EndreSluttarsak(
         val aarsak: DeltakerEndring.Aarsak,
         override val begrunnelseFraNav: String?,
@@ -153,6 +161,14 @@ data class InnholdDto(
 
 fun DeltakerEndring.toHendelseEndring(utkast: UtkastDto? = null) = when (val endring = this.endring) {
     is DeltakerEndring.Endring.AvsluttDeltakelse -> HendelseType.AvsluttDeltakelse(
+        aarsak = endring.aarsak,
+        sluttdato = endring.sluttdato,
+        begrunnelseFraNav = endring.begrunnelse,
+        begrunnelseFraArrangor = forslag?.begrunnelse,
+        endringFraForslag = forslag?.endring,
+    )
+
+    is DeltakerEndring.Endring.AvbrytDeltakelse -> HendelseType.AvbrytDeltakelse(
         aarsak = endring.aarsak,
         sluttdato = endring.sluttdato,
         begrunnelseFraNav = endring.begrunnelse,
