@@ -75,7 +75,7 @@ data class DeltakerEndring(
         ) : Endring()
 
         data class AvsluttDeltakelse(
-            val aarsak: Aarsak,
+            val aarsak: Aarsak?,
             val sluttdato: LocalDate,
             val begrunnelse: String?,
         ) : Endring()
