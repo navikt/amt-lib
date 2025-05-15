@@ -80,6 +80,12 @@ data class DeltakerEndring(
             val begrunnelse: String?,
         ) : Endring()
 
+        data class AvbrytDeltakelse(
+            val aarsak: Aarsak,
+            val sluttdato: LocalDate,
+            val begrunnelse: String?,
+        ) : Endring()
+
         data class EndreSluttarsak(
             val aarsak: Aarsak,
             val begrunnelse: String?,
