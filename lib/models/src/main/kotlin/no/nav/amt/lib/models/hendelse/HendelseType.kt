@@ -101,7 +101,7 @@ sealed interface HendelseType {
     ) : HendelseMedForslag
 
     data class AvsluttDeltakelse(
-        val aarsak: DeltakerEndring.Aarsak,
+        val aarsak: DeltakerEndring.Aarsak?,
         val sluttdato: LocalDate,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
