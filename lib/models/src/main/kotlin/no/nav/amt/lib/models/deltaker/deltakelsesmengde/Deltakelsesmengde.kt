@@ -29,16 +29,20 @@ fun DeltakerEndring.Endring.EndreDeltakelsesmengde.toDeltakelsesmengde(opprettet
     opprettet = opprettet,
 )
 
-fun Vedtak.toDeltakelsesmengde() = Deltakelsesmengde(
-    deltakelsesprosent = this.deltakerVedVedtak.deltakelsesprosent ?: 100F,
-    dagerPerUke = this.deltakerVedVedtak.dagerPerUke,
-    gyldigFra = this.fattet?.toLocalDate() ?: this.opprettet.toLocalDate(),
-    opprettet = this.fattet ?: this.opprettet,
-)
+fun Vedtak.toDeltakelsesmengde() = this.deltakerVedVedtak.deltakelsesprosent?.let {
+    Deltakelsesmengde(
+        deltakelsesprosent = this.deltakerVedVedtak.deltakelsesprosent,
+        dagerPerUke = this.deltakerVedVedtak.dagerPerUke,
+        gyldigFra = this.fattet?.toLocalDate() ?: this.opprettet.toLocalDate(),
+        opprettet = this.fattet ?: this.opprettet,
+    )
+}
 
-fun ImportertFraArena.toDeltakelsesmengde() = Deltakelsesmengde(
-    deltakelsesprosent = this.deltakerVedImport.deltakelsesprosent ?: 100F,
-    dagerPerUke = this.deltakerVedImport.dagerPerUke,
-    gyldigFra = this.deltakerVedImport.innsoktDato,
-    opprettet = this.deltakerVedImport.innsoktDato.atStartOfDay(),
-)
+fun ImportertFraArena.toDeltakelsesmengde() = this.deltakerVedImport.deltakelsesprosent?.let {
+    Deltakelsesmengde(
+        deltakelsesprosent = this.deltakerVedImport.deltakelsesprosent,
+        dagerPerUke = this.deltakerVedImport.dagerPerUke,
+        gyldigFra = this.deltakerVedImport.innsoktDato,
+        opprettet = this.deltakerVedImport.innsoktDato.atStartOfDay(),
+    )
+}
