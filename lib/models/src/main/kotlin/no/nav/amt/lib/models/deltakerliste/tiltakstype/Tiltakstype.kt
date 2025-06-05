@@ -11,6 +11,12 @@ data class Tiltakstype(
     val innsatsgrupper: Set<Innsatsgruppe>,
     val innhold: DeltakerRegistreringInnhold?,
 ) {
+    val visningsnavn get() = if(navn == "Jobbklubb"){
+        "Jobbsøkerkurs"
+    } else {
+        navn
+    }
+    
     enum class ArenaKode {
         ARBFORB,
         ARBRRHDAG,
