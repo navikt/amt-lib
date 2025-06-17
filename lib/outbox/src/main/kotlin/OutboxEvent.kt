@@ -25,7 +25,7 @@ CREATE INDEX idx_outbox_status_created ON outbox_events(status, created_at);
  */
 
 data class OutboxEvent(
-    val id: Long? = null,
+    val id: OutboxEventId? = null,
     val aggregateId: String,
     val aggregateType: String,
     val topic: String,
@@ -36,6 +36,13 @@ data class OutboxEvent(
     val retryCount: Int = 0,
     val errorMessage: String? = null,
 )
+
+@JvmInline
+value class OutboxEventId(
+    val value: Long,
+) {
+    override fun toString(): String = value.toString()
+}
 
 enum class OutboxEventStatus {
     PENDING,
