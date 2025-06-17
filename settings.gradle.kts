@@ -20,3 +20,5 @@ include("lib:utils")
 findProject(":lib:utils")?.name = "utils"
 include("lib:models")
 findProject(":lib:models")?.name = "models"
+include("lib:outbox")
+findProject(":lib:outbox")?.name = "outbox"
