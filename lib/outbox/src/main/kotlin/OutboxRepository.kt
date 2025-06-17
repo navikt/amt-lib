@@ -8,7 +8,7 @@ import org.postgresql.util.PGobject
 
 class OutboxRepository {
     private fun rowmapper(row: Row) = OutboxEvent(
-        id = row.long("id"),
+        id = OutboxEventId(row.long("id")),
         aggregateId = row.string("aggregate_id"),
         aggregateType = row.string("aggregate_type"),
         topic = row.string("topic"),
@@ -81,7 +81,7 @@ class OutboxRepository {
         it.list(queryOf(sql, params), this::rowmapper)
     }
 
-    fun markAsProcessed(eventId: Long) = Database.query {
+    fun markAsProcessed(eventId: OutboxEventId) = Database.query {
         val sql =
             """
             update outbox_event
@@ -92,13 +92,13 @@ class OutboxRepository {
             """.trimIndent()
 
         val params = mapOf(
-            "id" to eventId,
+            "id" to eventId.value,
         )
 
         it.update(queryOf(sql, params))
     }
 
-    fun markAsProcessing(eventId: Long) = Database.query {
+    fun markAsProcessing(eventId: OutboxEventId) = Database.query {
         val sql =
             """
             update outbox_event
@@ -108,13 +108,13 @@ class OutboxRepository {
             """.trimIndent()
 
         val params = mapOf(
-            "id" to eventId,
+            "id" to eventId.value,
         )
 
         it.update(queryOf(sql, params))
     }
 
-    fun markAsFailed(eventId: Long, errorMessage: String) = Database.query {
+    fun markAsFailed(eventId: OutboxEventId, errorMessage: String) = Database.query {
         val sql =
             """
             update outbox_event
@@ -126,16 +126,16 @@ class OutboxRepository {
             """.trimIndent()
 
         val params = mapOf(
-            "id" to eventId,
+            "id" to eventId.value,
             "error_message" to errorMessage,
         )
 
         it.update(queryOf(sql, params))
     }
 
-    fun get(id: Long): OutboxEvent? = Database.query {
+    fun get(id: OutboxEventId): OutboxEvent? = Database.query {
         val sql = "select * from outbox_event where id = :id"
-        val params = mapOf("id" to id)
+        val params = mapOf("id" to id.value)
         it.single(queryOf(sql, params), this::rowmapper)
     }
 }
