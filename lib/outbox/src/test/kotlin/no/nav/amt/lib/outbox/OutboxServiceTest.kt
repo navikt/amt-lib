@@ -1,7 +1,7 @@
+package no.nav.amt.lib.outbox
+
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import no.nav.amt.lib.OutboxRepository
-import no.nav.amt.lib.OutboxService
 import no.nav.amt.lib.testing.SingletonPostgres16Container
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -27,7 +27,7 @@ class OutboxServiceTest {
     @BeforeEach
     fun setup() {
         repository = OutboxRepository()
-        service = OutboxService(repository)
+        service = OutboxService()
     }
 
     data class TestAggregate(
@@ -50,7 +50,7 @@ class OutboxServiceTest {
         event.payload["foo"].asText() shouldBe aggregate.foo
         event.payload["bar"].asInt() shouldBe aggregate.bar
 
-        val persisted = repository.get(event.id!!)!!
+        val persisted = repository.get(event.id)!!
         persisted.aggregateId shouldBe aggregateId.toString()
         persisted.aggregateType shouldBe TestAggregate::class.simpleName
         persisted.topic shouldBe topic
