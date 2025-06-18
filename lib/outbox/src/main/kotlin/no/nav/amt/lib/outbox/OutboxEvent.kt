@@ -1,4 +1,4 @@
-package no.nav.amt.lib
+package no.nav.amt.lib.outbox
 
 import com.fasterxml.jackson.databind.JsonNode
 import java.time.ZonedDateTime
@@ -25,16 +25,23 @@ CREATE INDEX idx_outbox_status_created ON outbox_events(status, created_at);
  */
 
 data class OutboxEvent(
-    val id: OutboxEventId? = null,
+    val id: OutboxEventId,
     val aggregateId: String,
     val aggregateType: String,
     val topic: String,
     val payload: JsonNode,
-    val createdAt: ZonedDateTime = ZonedDateTime.now(),
+    val createdAt: ZonedDateTime,
     val processedAt: ZonedDateTime? = null,
-    val status: OutboxEventStatus = OutboxEventStatus.PENDING,
+    val status: OutboxEventStatus,
     val retryCount: Int = 0,
     val errorMessage: String? = null,
+)
+
+internal data class NewOutboxEvent(
+    val aggregateId: String,
+    val aggregateType: String,
+    val topic: String,
+    val payload: JsonNode,
 )
 
 @JvmInline

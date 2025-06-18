@@ -1,4 +1,4 @@
-package no.nav.amt.lib
+package no.nav.amt.lib.outbox
 
 import kotliquery.Row
 import kotliquery.queryOf
@@ -6,7 +6,7 @@ import no.nav.amt.lib.utils.database.Database
 import no.nav.amt.lib.utils.objectMapper
 import org.postgresql.util.PGobject
 
-class OutboxRepository {
+internal class OutboxRepository {
     private fun rowmapper(row: Row) = OutboxEvent(
         id = OutboxEventId(row.long("id")),
         aggregateId = row.string("aggregate_id"),
@@ -20,7 +20,7 @@ class OutboxRepository {
         errorMessage = row.stringOrNull("error_message"),
     )
 
-    fun insert(event: OutboxEvent) = Database.query {
+    internal fun insertNewEvent(event: NewOutboxEvent) = Database.query {
         val sql =
             """
             insert into outbox_event (
@@ -28,22 +28,16 @@ class OutboxRepository {
                 aggregate_type, 
                 topic, 
                 payload, 
-                created_at, 
-                processed_at, 
                 status, 
-                retry_count, 
-                error_message
+                retry_count
             )
             values (
                 :aggregate_id, 
                 :aggregate_type, 
                 :topic, 
                 :payload, 
-                :created_at, 
-                :processed_at, 
                 :status, 
-                :retry_count, 
-                :error_message
+                :retry_count 
             )
             returning *
             """.trimIndent()
@@ -53,11 +47,8 @@ class OutboxRepository {
             "aggregate_type" to event.aggregateType,
             "topic" to event.topic,
             "payload" to toPGObject(event.payload),
-            "created_at" to event.createdAt,
-            "processed_at" to event.processedAt,
-            "status" to event.status.name,
-            "retry_count" to event.retryCount,
-            "error_message" to event.errorMessage,
+            "status" to OutboxEventStatus.PENDING.name,
+            "retry_count" to 0,
         )
 
         it.single(queryOf(sql, params), this::rowmapper)
