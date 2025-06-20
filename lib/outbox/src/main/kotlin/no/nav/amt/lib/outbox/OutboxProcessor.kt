@@ -13,37 +13,36 @@ class OutboxProcessor(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun start() {
+    fun start(initialDelay: Duration = Duration.ofMillis(1000), period: Duration = Duration.ofMillis(5000)) {
         jobManager.startJob(
             name = "outbox-processor",
-            initialDelay = Duration.ofMillis(1000),
-            period = Duration.ofMillis(5000),
+            initialDelay = initialDelay,
+            period = period,
         ) {
             process()
         }
     }
 
-    private fun process() {
+    internal fun process() {
         try {
             val unprocessedEvents = service.findUnprocessedEvents(100)
             if (unprocessedEvents.isEmpty()) {
                 return
             }
 
-            val failedKeys = mutableSetOf<String>()
+            val failedKeys = mutableSetOf<Pair<String, String>>()
 
             unprocessedEvents.forEach { event ->
                 try {
-                    if (failedKeys.contains(event.aggregateId)) {
+                    if (failedKeys.contains(Pair(event.aggregateId, event.topic))) {
                         log.warn("Skipping processing of event ${event.id} for aggregate ${event.aggregateId} due to previous failure.")
                         return@forEach
                     }
                     produce(event)
                 } catch (e: Exception) {
-                    val msg = "Failed to process outbox-event ${event.id}: ${e.message}"
-                    service.markAsFailed(event.id, msg)
-                    log.error(msg, e)
-                    failedKeys.add(event.aggregateId)
+                    service.markAsFailed(event.id, e.message ?: e::class.java.name)
+                    log.error("Failed to process outbox-event ${event.id}", e)
+                    failedKeys.add(Pair(event.aggregateId, event.topic))
                 }
             }
         } catch (e: Exception) {
