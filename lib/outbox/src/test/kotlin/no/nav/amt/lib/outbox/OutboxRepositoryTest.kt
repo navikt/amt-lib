@@ -89,19 +89,4 @@ class OutboxRepositoryTest {
         failed?.errorMessage shouldBe errorMsg
         failed?.retryCount shouldBe 1
     }
-
-    @Test
-    fun `markAsProcessing updates event status to PROCESSING`() {
-        val repo = OutboxRepository()
-        val event = NewOutboxEvent(
-            aggregateId = "agg-6",
-            aggregateType = "type-4",
-            topic = "topic-4",
-            payload = objectMapper.createObjectNode().put("key", "to-process"),
-        )
-        val inserted = repo.insertNewEvent(event)
-        repo.markAsProcessing(inserted.id)
-        val processing = repo.get(inserted.id)
-        processing?.status shouldBe OutboxEventStatus.PROCESSING
-    }
 }

@@ -53,7 +53,6 @@ value class OutboxEventId(
 
 enum class OutboxEventStatus {
     PENDING,
-    PROCESSING,
     PROCESSED,
     FAILED,
 }

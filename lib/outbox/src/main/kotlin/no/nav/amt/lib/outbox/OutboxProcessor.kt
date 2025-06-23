@@ -51,7 +51,6 @@ class OutboxProcessor(
     }
 
     private fun produce(event: OutboxEvent) {
-        service.markAsProcessing(event.id)
         producer.produce(
             topic = event.topic,
             key = event.aggregateId,

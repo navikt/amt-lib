@@ -89,22 +89,6 @@ internal class OutboxRepository {
         it.update(queryOf(sql, params))
     }
 
-    fun markAsProcessing(eventId: OutboxEventId) = Database.query {
-        val sql =
-            """
-            update outbox_event
-            set status = '${OutboxEventStatus.PROCESSING.name}', 
-                modified_at = current_timestamp
-            where id = :id
-            """.trimIndent()
-
-        val params = mapOf(
-            "id" to eventId.value,
-        )
-
-        it.update(queryOf(sql, params))
-    }
-
     fun markAsFailed(eventId: OutboxEventId, errorMessage: String) = Database.query {
         val sql =
             """

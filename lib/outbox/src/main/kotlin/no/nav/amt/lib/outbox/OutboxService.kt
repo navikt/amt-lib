@@ -25,6 +25,4 @@ class OutboxService {
     fun markAsProcessed(id: OutboxEventId) = repository.markAsProcessed(id)
 
     fun markAsFailed(id: OutboxEventId, errorMessage: String) = repository.markAsFailed(id, errorMessage)
-
-    fun markAsProcessing(id: OutboxEventId) = repository.markAsProcessing(id)
 }
