@@ -7,15 +7,15 @@ class OutboxService {
     private val repository = OutboxRepository()
 
     fun <T : Any> newEvent(
-        aggregateId: UUID,
-        aggregate: T,
+        key: UUID,
+        value: T,
         topic: String,
     ): OutboxEvent {
         val event = NewOutboxEvent(
-            aggregateId = aggregateId.toString(),
-            aggregateType = aggregate::class.java.simpleName,
+            key = key.toString(),
+            valueType = value::class.java.simpleName,
             topic = topic,
-            payload = objectMapper.readTree(objectMapper.writeValueAsString(aggregate)),
+            value = objectMapper.readTree(objectMapper.writeValueAsString(value)),
         )
         return repository.insertNewEvent(event)
     }

@@ -8,10 +8,10 @@ Create a postgres table with the following SQL:
 ```sql
 CREATE TABLE outbox_event (
 id SERIAL PRIMARY KEY,
-aggregate_id VARCHAR(255) NOT NULL,
-aggregate_type VARCHAR(255) NOT NULL,
+key VARCHAR(255) NOT NULL,
+value JSONB NOT NULL,
+value_type VARCHAR(255) NOT NULL,
 topic VARCHAR(255) NOT NULL,
-payload JSONB NOT NULL,
 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 modified_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 processed_at TIMESTAMPTZ,
@@ -26,10 +26,10 @@ CREATE INDEX idx_outbox_status_created ON outbox_events(status, created_at);
 
 data class OutboxEvent(
     val id: OutboxEventId,
-    val aggregateId: String,
-    val aggregateType: String,
+    val key: String,
+    val value: JsonNode,
+    val valueType: String,
     val topic: String,
-    val payload: JsonNode,
     val createdAt: ZonedDateTime,
     val processedAt: ZonedDateTime? = null,
     val status: OutboxEventStatus,
@@ -38,10 +38,10 @@ data class OutboxEvent(
 )
 
 internal data class NewOutboxEvent(
-    val aggregateId: String,
-    val aggregateType: String,
+    val key: String,
+    val value: JsonNode,
+    val valueType: String,
     val topic: String,
-    val payload: JsonNode,
 )
 
 @JvmInline

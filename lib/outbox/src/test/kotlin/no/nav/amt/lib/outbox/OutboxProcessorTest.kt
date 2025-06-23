@@ -58,10 +58,10 @@ class OutboxProcessorTest {
 
     @Test
     fun `process - previous event failed - skips new event for same aggregate`() {
-        val aggregateId = UUID.randomUUID()
+        val key = UUID.randomUUID()
 
-        val eventToFail = newEvent(aggregateId = aggregateId, topic = failingTestTopic)
-        val eventToIgnore = newEvent(aggregateId = aggregateId, topic = failingTestTopic)
+        val eventToFail = newEvent(key = key, topic = failingTestTopic)
+        val eventToIgnore = newEvent(key = key, topic = failingTestTopic)
 
         outboxProcessor.process()
         outboxRepository.get(eventToFail.id)!!.status shouldBe OutboxEventStatus.FAILED
@@ -118,10 +118,10 @@ class OutboxProcessorTest {
 
     @Test
     fun `process - same aggregate different topics - process independently`() {
-        val aggregateId = UUID.randomUUID()
+        val key = UUID.randomUUID()
 
-        val failingEvent = newEvent(aggregateId = aggregateId, topic = failingTestTopic)
-        val successEvent = newEvent(aggregateId = aggregateId, topic = testTopic)
+        val failingEvent = newEvent(key = key, topic = failingTestTopic)
+        val successEvent = newEvent(key = key, topic = testTopic)
 
         outboxProcessor.process()
 
@@ -146,38 +146,38 @@ class OutboxProcessorTest {
         sortedByProcessedAt.map { it.id } shouldBe sortedById.map { it.id }
     }
 
-    private data class TestAggregate(
+    private data class Value(
         val name: String = "Test",
         val values: List<Int> = listOf(1, 2, 3),
     )
 
     private fun newEvent(
-        aggregate: Any = TestAggregate(),
-        aggregateId: UUID = UUID.randomUUID(),
+        value: Any = Value(),
+        key: UUID = UUID.randomUUID(),
         topic: String = testTopic,
     ) = outboxService.newEvent(
-        aggregateId = aggregateId,
-        aggregate = aggregate,
+        key = key,
+        value = value,
         topic = topic,
     )
 
     private fun newEvents(
         count: Int,
         topic: String = testTopic,
-        aggregateId: UUID? = null,
+        key: UUID? = null,
     ) = (1..count).map {
         newEvent(
-            aggregate = TestAggregate("Test-$it"),
-            aggregateId = aggregateId ?: UUID.randomUUID(),
+            value = Value("Test-$it"),
+            key = key ?: UUID.randomUUID(),
             topic = topic,
         )
     }
 
     private fun verifyProducedEvent(event: OutboxEvent, topic: String = testTopic) = assertProduced(topic) {
         AsyncUtils.eventually {
-            val value = objectMapper.readTree(it[event.aggregateId])
+            val value = objectMapper.readTree(it[event.key])
 
-            value shouldBe event.payload
+            value shouldBe event.value
         }
     }
 }
