@@ -15,10 +15,10 @@ class OutboxRepositoryTest {
     fun `test outbox repository`() {
         val repo = OutboxRepository()
         val event = NewOutboxEvent(
-            aggregateId = "test-aggregate-id",
-            aggregateType = "test-aggregate-type",
+            key = "test-key",
+            valueType = "test-value-type",
             topic = "test-topic",
-            payload = objectMapper.createObjectNode().put("key", "value"),
+            value = objectMapper.createObjectNode().put("key", "value"),
         )
 
         val eventWithId = repo.insertNewEvent(event)
@@ -30,40 +30,40 @@ class OutboxRepositoryTest {
     fun `findUnprocessedEvents returns pending and failed events`() {
         val repo = OutboxRepository()
         val pendingEvent = NewOutboxEvent(
-            aggregateId = "agg-1",
-            aggregateType = "type-1",
+            key = "key-1",
+            valueType = "type-1",
             topic = "topic-1",
-            payload = objectMapper.createObjectNode().put("key", "pending"),
+            value = objectMapper.createObjectNode().put("key", "pending"),
         )
         repo.insertNewEvent(pendingEvent)
         val failedEvent = pendingEvent.copy(
-            aggregateId = "agg-2",
-            payload = objectMapper.createObjectNode().put("key", "failed"),
+            key = "key-2",
+            value = objectMapper.createObjectNode().put("key", "failed"),
         )
         repo.insertNewEvent(failedEvent).also {
             repo.markAsFailed(it.id, "Some error")
         }
         val processedEvent = pendingEvent.copy(
-            aggregateId = "agg-3",
-            payload = objectMapper.createObjectNode().put("key", "processed"),
+            key = "key-3",
+            value = objectMapper.createObjectNode().put("key", "processed"),
         )
         repo.insertNewEvent(processedEvent).also { repo.markAsProcessed(it.id) }
 
         val result = repo.findUnprocessedEvents(10)
         result.map { it.status }.toSet().find { it == OutboxEventStatus.PROCESSED } shouldBe null
-        result.any { it.aggregateId == "agg-1" } shouldBe true
-        result.any { it.aggregateId == "agg-2" } shouldBe true
-        result.any { it.aggregateId == "agg-3" } shouldBe false
+        result.any { it.key == "key-1" } shouldBe true
+        result.any { it.key == "key-2" } shouldBe true
+        result.any { it.key == "key-3" } shouldBe false
     }
 
     @Test
     fun `markAsProcessed updates event status and processedAt`() {
         val repo = OutboxRepository()
         val event = NewOutboxEvent(
-            aggregateId = "agg-4",
-            aggregateType = "type-2",
+            key = "key-4",
+            valueType = "type-2",
             topic = "topic-2",
-            payload = objectMapper.createObjectNode().put("key", "to-process"),
+            value = objectMapper.createObjectNode().put("key", "to-process"),
         )
         val inserted = repo.insertNewEvent(event)
         repo.markAsProcessed(inserted.id)
@@ -76,10 +76,10 @@ class OutboxRepositoryTest {
     fun `markAsFailed updates event status, error message, and retry count`() {
         val repo = OutboxRepository()
         val event = NewOutboxEvent(
-            aggregateId = "agg-5",
-            aggregateType = "type-3",
+            key = "key-5",
+            valueType = "type-3",
             topic = "topic-3",
-            payload = objectMapper.createObjectNode().put("key", "to-fail"),
+            value = objectMapper.createObjectNode().put("key", "to-fail"),
         )
         val inserted = repo.insertNewEvent(event)
         val errorMsg = "Something went wrong"

@@ -30,19 +30,22 @@ class OutboxProcessor(
                 return
             }
 
-            val failedKeys = mutableSetOf<Pair<String, String>>()
+            val failedKeys = mutableSetOf<KeyTopicPair>()
 
             unprocessedEvents.forEach { event ->
                 try {
-                    if (failedKeys.contains(Pair(event.aggregateId, event.topic))) {
-                        log.warn("Skipping processing of event ${event.id} for aggregate ${event.aggregateId} due to previous failure.")
+                    if (failedKeys.contains(KeyTopicPair(event.key, event.topic))) {
+                        log.warn(
+                            "Skipping processing of event ${event.id} for key ${event.key} " +
+                                "and topic ${event.topic} due to previous failure.",
+                        )
                         return@forEach
                     }
                     produce(event)
                 } catch (e: Exception) {
                     service.markAsFailed(event.id, e.message ?: e::class.java.name)
                     log.error("Failed to process outbox-event ${event.id}", e)
-                    failedKeys.add(Pair(event.aggregateId, event.topic))
+                    failedKeys.add(KeyTopicPair(event.key, event.topic))
                 }
             }
         } catch (e: Exception) {
@@ -53,10 +56,15 @@ class OutboxProcessor(
     private fun produce(event: OutboxEvent) {
         producer.produce(
             topic = event.topic,
-            key = event.aggregateId,
-            value = objectMapper.writeValueAsString(event.payload),
+            key = event.key,
+            value = objectMapper.writeValueAsString(event.value),
         )
         service.markAsProcessed(event.id)
-        log.info("Processed outbox-event ${event.id} for aggregate ${event.aggregateId} on topic ${event.topic}")
+        log.info("Processed outbox-event ${event.id} for key ${event.key} on topic ${event.topic}")
     }
+
+    data class KeyTopicPair(
+        val key: String,
+        val topic: String,
+    )
 }

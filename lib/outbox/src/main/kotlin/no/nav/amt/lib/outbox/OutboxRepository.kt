@@ -9,10 +9,10 @@ import org.postgresql.util.PGobject
 internal class OutboxRepository {
     private fun rowmapper(row: Row) = OutboxEvent(
         id = OutboxEventId(row.long("id")),
-        aggregateId = row.string("aggregate_id"),
-        aggregateType = row.string("aggregate_type"),
+        key = row.string("key"),
+        value = objectMapper.readTree(row.string("value")),
+        valueType = row.string("value_type"),
         topic = row.string("topic"),
-        payload = objectMapper.readTree(row.string("payload")),
         createdAt = row.zonedDateTime("created_at"),
         processedAt = row.zonedDateTimeOrNull("processed_at"),
         status = OutboxEventStatus.valueOf(row.string("status")),
@@ -24,18 +24,18 @@ internal class OutboxRepository {
         val sql =
             """
             insert into outbox_event (
-                aggregate_id, 
-                aggregate_type, 
+                key, 
+                value, 
+                value_type, 
                 topic, 
-                payload, 
                 status, 
                 retry_count
             )
             values (
-                :aggregate_id, 
-                :aggregate_type, 
+                :key, 
+                :value, 
+                :value_type, 
                 :topic, 
-                :payload, 
                 :status, 
                 :retry_count 
             )
@@ -43,18 +43,18 @@ internal class OutboxRepository {
             """.trimIndent()
 
         val params = mapOf(
-            "aggregate_id" to event.aggregateId,
-            "aggregate_type" to event.aggregateType,
+            "key" to event.key,
+            "value" to toPGObject(event.value),
+            "value_type" to event.valueType,
             "topic" to event.topic,
-            "payload" to toPGObject(event.payload),
             "status" to OutboxEventStatus.PENDING.name,
             "retry_count" to 0,
         )
 
         it.single(queryOf(sql, params), this::rowmapper)
             ?: throw NoSuchElementException(
-                "Failed to insert OutboxEvent for aggregateId: ${event.aggregateId}, " +
-                    "aggregateType: ${event.aggregateType} and topic: ${event.topic}",
+                "Failed to insert OutboxEvent for key: ${event.key}, " +
+                    "valueType: ${event.valueType} and topic: ${event.topic}",
             )
     }
 
