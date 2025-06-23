@@ -6,13 +6,13 @@ plugins {
 
 dependencies {
     api(libs.kotlinx.coroutines)
+    api(libs.jackson.kotlin)
+    api(project(":lib:utils"))
+    api(project(":lib:kafka"))
     implementation(libs.logback)
-    implementation(libs.jackson.kotlin)
     implementation(libs.jackson.jsr310)
     implementation(libs.kotliquery)
     implementation(libs.postgresql)
-    implementation(project(":lib:utils"))
-    implementation(project(":lib:kafka"))
 
     testImplementation(project(":lib:testing"))
     testImplementation(libs.kotlin.test.junit5)
