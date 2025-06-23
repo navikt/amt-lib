@@ -19,11 +19,11 @@ class OutboxProcessor(
             initialDelay = initialDelay,
             period = period,
         ) {
-            process()
+            processEvents()
         }
     }
 
-    internal fun process() {
+    internal fun processEvents() {
         try {
             val unprocessedEvents = service.findUnprocessedEvents(100)
             if (unprocessedEvents.isEmpty()) {
@@ -41,7 +41,7 @@ class OutboxProcessor(
                         )
                         return@forEach
                     }
-                    produce(event)
+                    process(event)
                 } catch (e: Exception) {
                     service.markAsFailed(event.id, e.message ?: e::class.java.name)
                     log.error("Failed to process outbox-event ${event.id}", e)
@@ -53,7 +53,7 @@ class OutboxProcessor(
         }
     }
 
-    private fun produce(event: OutboxEvent) {
+    private fun process(event: OutboxEvent) {
         producer.produce(
             topic = event.topic,
             key = event.key,
