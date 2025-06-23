@@ -36,9 +36,9 @@ class OutboxProcessorTest {
     private val failingTestTopic = "INVALID TOPIC NAME!"
 
     @Test
-    fun `process - new event - gets processed`() {
+    fun `processEvents - new event - gets_processed`() {
         val event = newEvent()
-        outboxProcessor.process()
+        outboxProcessor.processEvents()
 
         val processedEvent = outboxRepository.get(event.id)!!
         processedEvent.processedAt!! shouldBeCloseTo ZonedDateTime.now()
@@ -47,32 +47,32 @@ class OutboxProcessorTest {
     }
 
     @Test
-    fun `process - producer fails - marks event as FAILED`() {
+    fun `processEvents - producer fails - marks event as FAILED`() {
         val event = newEvent(topic = failingTestTopic)
 
-        outboxProcessor.process()
+        outboxProcessor.processEvents()
 
         val failedEvent = outboxRepository.get(event.id)!!
         failedEvent.status shouldBe OutboxEventStatus.FAILED
     }
 
     @Test
-    fun `process - previous event failed - skips new event for same aggregate`() {
+    fun `processEvents - previous event failed - skips new event for same aggregate`() {
         val key = UUID.randomUUID()
 
         val eventToFail = newEvent(key = key, topic = failingTestTopic)
         val eventToIgnore = newEvent(key = key, topic = failingTestTopic)
 
-        outboxProcessor.process()
+        outboxProcessor.processEvents()
         outboxRepository.get(eventToFail.id)!!.status shouldBe OutboxEventStatus.FAILED
         outboxRepository.get(eventToIgnore.id)!!.status shouldBe OutboxEventStatus.PENDING
     }
 
     @Test
-    fun `process - multiple events - all process successfully`() {
+    fun `processEvents - multiple events - all processEvents successfully`() {
         val events = newEvents(5)
 
-        outboxProcessor.process()
+        outboxProcessor.processEvents()
 
         events.forEach { event ->
             val processedEvent = outboxRepository.get(event.id)!!
@@ -83,11 +83,11 @@ class OutboxProcessorTest {
     }
 
     @Test
-    fun `process - mixed success and failure - handles both correctly`() {
+    fun `processEvents - mixed success and failure - handles both correctly`() {
         val successEvents = newEvents(3, testTopic)
         val failEvents = newEvents(2, failingTestTopic)
 
-        outboxProcessor.process()
+        outboxProcessor.processEvents()
 
         successEvents.forEach { event ->
             val processedEvent = outboxRepository.get(event.id)!!
@@ -102,28 +102,28 @@ class OutboxProcessorTest {
     }
 
     @Test
-    fun `process - failed events are retried on next run`() {
+    fun `processEvents - failed events are retried on next run`() {
         val event = newEvent(topic = failingTestTopic)
 
-        outboxProcessor.process()
+        outboxProcessor.processEvents()
         val firstResult = outboxRepository.get(event.id)!!
         firstResult.status shouldBe OutboxEventStatus.FAILED
         val firstRetryCount = firstResult.retryCount
 
-        outboxProcessor.process()
+        outboxProcessor.processEvents()
         val secondResult = outboxRepository.get(event.id)!!
         secondResult.status shouldBe OutboxEventStatus.FAILED
         secondResult.retryCount shouldBe (firstRetryCount + 1)
     }
 
     @Test
-    fun `process - same aggregate different topics - process independently`() {
+    fun `process - same aggregate different topics - processEvents independently`() {
         val key = UUID.randomUUID()
 
         val failingEvent = newEvent(key = key, topic = failingTestTopic)
         val successEvent = newEvent(key = key, topic = testTopic)
 
-        outboxProcessor.process()
+        outboxProcessor.processEvents()
 
         outboxRepository.get(failingEvent.id)!!.status shouldBe OutboxEventStatus.FAILED
         outboxRepository.get(successEvent.id)!!.status shouldBe OutboxEventStatus.PROCESSED
@@ -131,10 +131,10 @@ class OutboxProcessorTest {
     }
 
     @Test
-    fun `process - events processed in creation order`() {
+    fun `processEvents - events processed in creation order`() {
         val events = newEvents(3)
 
-        outboxProcessor.process()
+        outboxProcessor.processEvents()
 
         val processedEvents = events.map { outboxRepository.get(it.id)!! }
         processedEvents.forEach {
