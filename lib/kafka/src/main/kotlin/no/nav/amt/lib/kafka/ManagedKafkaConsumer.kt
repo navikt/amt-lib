@@ -1,10 +1,12 @@
 package no.nav.amt.lib.kafka
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -29,17 +31,18 @@ class ManagedKafkaConsumer<K, V>(
     private var running = false
 
     val status: ConsumerStatus = ConsumerStatus()
+    private lateinit var runState: Deferred<Unit>
 
     init {
         Runtime.getRuntime().addShutdownHook(
             Thread {
-                log.info("Shutting down Kafka consumer")
-                stop()
+                log.info("Shutting down Kafka consumer $topic")
+                runBlocking { close() }
             },
         )
     }
 
-    fun run() = scope.launch {
+    fun run() = scope.async {
         log.info("Starting consumer for topic: $topic")
         running = true
 
@@ -48,11 +51,21 @@ class ManagedKafkaConsumer<K, V>(
         }
     }
 
-    fun start() = run()
+    fun start() {
+        runState = run()
+    }
 
     fun stop() {
         log.info("Stopping consumer for topic: $topic")
         running = false
+    }
+
+    suspend fun close() {
+        log.info("Closing consumer for topic: $topic.. ..")
+        stop()
+        return runState.await().also {
+            log.info("Closed consumer for topic: $topic")
+        }
     }
 
     private suspend fun subscribe(consumer: KafkaConsumer<K, V>) {
