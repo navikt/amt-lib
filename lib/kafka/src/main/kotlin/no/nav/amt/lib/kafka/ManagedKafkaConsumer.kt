@@ -36,7 +36,7 @@ class ManagedKafkaConsumer<K, V>(
     init {
         Runtime.getRuntime().addShutdownHook(
             Thread {
-                log.info("Shutting down Kafka consumer $topic")
+                log.info("Received shutdown signal for Kafka consumer $topic")
                 runBlocking { close() }
             },
         )
@@ -48,7 +48,6 @@ class ManagedKafkaConsumer<K, V>(
     }
 
     fun stop() {
-        log.info("Stopping consumer for topic: $topic")
         running = false
     }
 
