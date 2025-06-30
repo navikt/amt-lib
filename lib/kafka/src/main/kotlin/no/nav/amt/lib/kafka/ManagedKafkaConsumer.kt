@@ -36,19 +36,10 @@ class ManagedKafkaConsumer<K, V>(
     init {
         Runtime.getRuntime().addShutdownHook(
             Thread {
-                log.info("Shutting down Kafka consumer $topic")
+                log.info("Received shutdown signal for Kafka consumer $topic")
                 runBlocking { close() }
             },
         )
-    }
-
-    fun run() = scope.async {
-        log.info("Running consumer for topic: $topic")
-        running = true
-
-        KafkaConsumer<K, V>(config).use { consumer ->
-            subscribe(consumer)
-        }
     }
 
     fun start() {
@@ -57,7 +48,6 @@ class ManagedKafkaConsumer<K, V>(
     }
 
     fun stop() {
-        log.info("Stopping consumer for topic: $topic")
         running = false
     }
 
@@ -66,6 +56,14 @@ class ManagedKafkaConsumer<K, V>(
         stop()
         return runState.await().also {
             log.info("Closed consumer for topic: $topic")
+        }
+    }
+
+    private fun run() = scope.async {
+        running = true
+
+        KafkaConsumer<K, V>(config).use { consumer ->
+            subscribe(consumer)
         }
     }
 
