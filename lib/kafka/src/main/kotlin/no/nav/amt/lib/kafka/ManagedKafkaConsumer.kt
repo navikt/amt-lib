@@ -43,7 +43,7 @@ class ManagedKafkaConsumer<K, V>(
     }
 
     fun run() = scope.async {
-        log.info("Starting consumer for topic: $topic")
+        log.info("Running consumer for topic: $topic")
         running = true
 
         KafkaConsumer<K, V>(config).use { consumer ->
@@ -52,6 +52,7 @@ class ManagedKafkaConsumer<K, V>(
     }
 
     fun start() {
+        log.info("Starting consumer for topic: $topic")
         runState = run()
     }
 
