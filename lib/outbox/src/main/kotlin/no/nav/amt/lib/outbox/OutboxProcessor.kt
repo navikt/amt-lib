@@ -7,17 +7,17 @@ import org.slf4j.LoggerFactory
 import java.time.Duration
 
 /**
- * Processes and publishes outbox events.
+ * Processes and publishes outbox records.
  * The processor is designed to be run as a background job.
  *
- * It will periodically fetch unprocessed events from the database and publish them to Kafka.
- * If an event fails to be published, it will be marked as failed and will be retried later.
- * To avoid publishing events out of order for the same key, the processor will not publish any new events for a key/topic
- * if a previous event for the same key/topic has failed.
+ * It will periodically fetch unprocessed records from the database and publish them to Kafka.
+ * If an record fails to be published, it will be marked as failed and will be retried later.
+ * To avoid publishing records out of order for the same key, the processor will not publish any new records for a key/topic
+ * if a previous record for the same key/topic has failed.
  *
- * @param service The service for interacting with the outbox event repository.
+ * @param service The service for interacting with the outbox record repository.
  * @param jobManager The job manager for scheduling the background job.
- * @param producer The Kafka producer for publishing events.
+ * @param producer The Kafka producer for publishing records.
  */
 class OutboxProcessor(
     private val service: OutboxService,
@@ -27,7 +27,7 @@ class OutboxProcessor(
     private val log = LoggerFactory.getLogger(javaClass)
 
     /**
-     * Starts a background job that periodically processes outbox events.
+     * Starts a background job that periodically processes outbox records.
      *
      * @param initialDelay The initial delay before the job starts.
      * @param period The period between each job execution.
@@ -38,48 +38,48 @@ class OutboxProcessor(
             initialDelay = initialDelay,
             period = period,
         ) {
-            processEvents()
+            processRecords()
         }
     }
 
-    internal fun processEvents() {
+    internal fun processRecords() {
         try {
-            val unprocessedEvents = service.findUnprocessedEvents(100)
-            if (unprocessedEvents.isEmpty()) {
+            val unprocessedRecords = service.findUnprocessedRecords(100)
+            if (unprocessedRecords.isEmpty()) {
                 return
             }
 
             val failedKeys = mutableSetOf<KeyTopicPair>()
 
-            unprocessedEvents.forEach { event ->
+            unprocessedRecords.forEach { record ->
                 try {
-                    if (failedKeys.contains(KeyTopicPair(event.key, event.topic))) {
+                    if (failedKeys.contains(KeyTopicPair(record.key, record.topic))) {
                         log.warn(
-                            "Skipping processing of event ${event.id} for key ${event.key} " +
-                                "and topic ${event.topic} due to previous failure.",
+                            "Skipping processing of record ${record.id} for key ${record.key} " +
+                                "and topic ${record.topic} due to previous failure.",
                         )
                         return@forEach
                     }
-                    process(event)
+                    process(record)
                 } catch (e: Exception) {
-                    service.markAsFailed(event.id, e.message ?: e::class.java.name)
-                    log.error("Failed to process outbox-event ${event.id}", e)
-                    failedKeys.add(KeyTopicPair(event.key, event.topic))
+                    service.markAsFailed(record.id, e.message ?: e::class.java.name)
+                    log.error("Failed to process outbox-record ${record.id}", e)
+                    failedKeys.add(KeyTopicPair(record.key, record.topic))
                 }
             }
         } catch (e: Exception) {
-            log.error("Failed to process outbox events: ${e.message}", e)
+            log.error("Failed to process outbox records: ${e.message}", e)
         }
     }
 
-    private fun process(event: OutboxEvent) {
+    private fun process(record: OutboxRecord) {
         producer.produce(
-            topic = event.topic,
-            key = event.key,
-            value = objectMapper.writeValueAsString(event.value),
+            topic = record.topic,
+            key = record.key,
+            value = objectMapper.writeValueAsString(record.value),
         )
-        service.markAsProcessed(event.id)
-        log.info("Processed outbox-event ${event.id} for key ${event.key} on topic ${event.topic}")
+        service.markAsProcessed(record.id)
+        log.info("Processed outbox-record ${record.id} for key ${record.key} on topic ${record.topic}")
     }
 
     data class KeyTopicPair(

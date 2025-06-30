@@ -36,112 +36,112 @@ class OutboxProcessorTest {
     private val failingTestTopic = "INVALID TOPIC NAME!"
 
     @Test
-    fun `processEvents - new event - gets_processed`() {
-        val event = newEvent()
-        outboxProcessor.processEvents()
+    fun `processRecords - new record - gets_processed`() {
+        val record = newRecord()
+        outboxProcessor.processRecords()
 
-        val processedEvent = outboxRepository.get(event.id)!!
-        processedEvent.processedAt!! shouldBeCloseTo ZonedDateTime.now()
-        processedEvent.status shouldBe OutboxEventStatus.PROCESSED
-        verifyProducedEvent(event)
+        val processedRecord = outboxRepository.get(record.id)!!
+        processedRecord.processedAt!! shouldBeCloseTo ZonedDateTime.now()
+        processedRecord.status shouldBe OutboxRecordStatus.PROCESSED
+        verifyProducedRecord(record)
     }
 
     @Test
-    fun `processEvents - producer fails - marks event as FAILED`() {
-        val event = newEvent(topic = failingTestTopic)
+    fun `processRecords - producer fails - marks record as FAILED`() {
+        val record = newRecord(topic = failingTestTopic)
 
-        outboxProcessor.processEvents()
+        outboxProcessor.processRecords()
 
-        val failedEvent = outboxRepository.get(event.id)!!
-        failedEvent.status shouldBe OutboxEventStatus.FAILED
+        val failedRecord = outboxRepository.get(record.id)!!
+        failedRecord.status shouldBe OutboxRecordStatus.FAILED
     }
 
     @Test
-    fun `processEvents - previous event failed - skips new event for same aggregate`() {
+    fun `processRecords - previous record failed - skips new record for same aggregate`() {
         val key = UUID.randomUUID()
 
-        val eventToFail = newEvent(key = key, topic = failingTestTopic)
-        val eventToIgnore = newEvent(key = key, topic = failingTestTopic)
+        val recordToFail = newRecord(key = key, topic = failingTestTopic)
+        val recordToIgnore = newRecord(key = key, topic = failingTestTopic)
 
-        outboxProcessor.processEvents()
-        outboxRepository.get(eventToFail.id)!!.status shouldBe OutboxEventStatus.FAILED
-        outboxRepository.get(eventToIgnore.id)!!.status shouldBe OutboxEventStatus.PENDING
+        outboxProcessor.processRecords()
+        outboxRepository.get(recordToFail.id)!!.status shouldBe OutboxRecordStatus.FAILED
+        outboxRepository.get(recordToIgnore.id)!!.status shouldBe OutboxRecordStatus.PENDING
     }
 
     @Test
-    fun `processEvents - multiple events - all processEvents successfully`() {
-        val events = newEvents(5)
+    fun `processRecords - multiple records - all processRecords successfully`() {
+        val records = newRecords(5)
 
-        outboxProcessor.processEvents()
+        outboxProcessor.processRecords()
 
-        events.forEach { event ->
-            val processedEvent = outboxRepository.get(event.id)!!
-            processedEvent.status shouldBe OutboxEventStatus.PROCESSED
-            processedEvent.processedAt!! shouldBeCloseTo ZonedDateTime.now()
-            verifyProducedEvent(event)
+        records.forEach { record ->
+            val processedRecord = outboxRepository.get(record.id)!!
+            processedRecord.status shouldBe OutboxRecordStatus.PROCESSED
+            processedRecord.processedAt!! shouldBeCloseTo ZonedDateTime.now()
+            verifyProducedRecord(record)
         }
     }
 
     @Test
-    fun `processEvents - mixed success and failure - handles both correctly`() {
-        val successEvents = newEvents(3, testTopic)
-        val failEvents = newEvents(2, failingTestTopic)
+    fun `processRecords - mixed success and failure - handles both correctly`() {
+        val successRecords = newRecords(3, testTopic)
+        val failRecords = newRecords(2, failingTestTopic)
 
-        outboxProcessor.processEvents()
+        outboxProcessor.processRecords()
 
-        successEvents.forEach { event ->
-            val processedEvent = outboxRepository.get(event.id)!!
-            processedEvent.status shouldBe OutboxEventStatus.PROCESSED
-            verifyProducedEvent(event)
+        successRecords.forEach { record ->
+            val processedRecord = outboxRepository.get(record.id)!!
+            processedRecord.status shouldBe OutboxRecordStatus.PROCESSED
+            verifyProducedRecord(record)
         }
 
-        failEvents.forEach { event ->
-            val failedEvent = outboxRepository.get(event.id)!!
-            failedEvent.status shouldBe OutboxEventStatus.FAILED
+        failRecords.forEach { record ->
+            val failedRecord = outboxRepository.get(record.id)!!
+            failedRecord.status shouldBe OutboxRecordStatus.FAILED
         }
     }
 
     @Test
-    fun `processEvents - failed events are retried on next run`() {
-        val event = newEvent(topic = failingTestTopic)
+    fun `processRecords - failed records are retried on next run`() {
+        val record = newRecord(topic = failingTestTopic)
 
-        outboxProcessor.processEvents()
-        val firstResult = outboxRepository.get(event.id)!!
-        firstResult.status shouldBe OutboxEventStatus.FAILED
+        outboxProcessor.processRecords()
+        val firstResult = outboxRepository.get(record.id)!!
+        firstResult.status shouldBe OutboxRecordStatus.FAILED
         val firstRetryCount = firstResult.retryCount
 
-        outboxProcessor.processEvents()
-        val secondResult = outboxRepository.get(event.id)!!
-        secondResult.status shouldBe OutboxEventStatus.FAILED
+        outboxProcessor.processRecords()
+        val secondResult = outboxRepository.get(record.id)!!
+        secondResult.status shouldBe OutboxRecordStatus.FAILED
         secondResult.retryCount shouldBe (firstRetryCount + 1)
     }
 
     @Test
-    fun `process - same aggregate different topics - processEvents independently`() {
+    fun `process - same aggregate different topics - processRecords independently`() {
         val key = UUID.randomUUID()
 
-        val failingEvent = newEvent(key = key, topic = failingTestTopic)
-        val successEvent = newEvent(key = key, topic = testTopic)
+        val failingRecord = newRecord(key = key, topic = failingTestTopic)
+        val successRecord = newRecord(key = key, topic = testTopic)
 
-        outboxProcessor.processEvents()
+        outboxProcessor.processRecords()
 
-        outboxRepository.get(failingEvent.id)!!.status shouldBe OutboxEventStatus.FAILED
-        outboxRepository.get(successEvent.id)!!.status shouldBe OutboxEventStatus.PROCESSED
-        verifyProducedEvent(successEvent)
+        outboxRepository.get(failingRecord.id)!!.status shouldBe OutboxRecordStatus.FAILED
+        outboxRepository.get(successRecord.id)!!.status shouldBe OutboxRecordStatus.PROCESSED
+        verifyProducedRecord(successRecord)
     }
 
     @Test
-    fun `processEvents - events processed in creation order`() {
-        val events = newEvents(3)
+    fun `processRecords - records processed in creation order`() {
+        val records = newRecords(3)
 
-        outboxProcessor.processEvents()
+        outboxProcessor.processRecords()
 
-        val processedEvents = events.map { outboxRepository.get(it.id)!! }
-        processedEvents.forEach {
-            it.status shouldBe OutboxEventStatus.PROCESSED
+        val processedRecords = records.map { outboxRepository.get(it.id)!! }
+        processedRecords.forEach {
+            it.status shouldBe OutboxRecordStatus.PROCESSED
         }
-        val sortedByProcessedAt = processedEvents.sortedBy { it.processedAt!! }
-        val sortedById = processedEvents.sortedBy { it.id.value }
+        val sortedByProcessedAt = processedRecords.sortedBy { it.processedAt!! }
+        val sortedById = processedRecords.sortedBy { it.id.value }
 
         sortedByProcessedAt.map { it.id } shouldBe sortedById.map { it.id }
     }
@@ -151,33 +151,33 @@ class OutboxProcessorTest {
         val values: List<Int> = listOf(1, 2, 3),
     )
 
-    private fun newEvent(
+    private fun newRecord(
         value: Any = Value(),
         key: UUID = UUID.randomUUID(),
         topic: String = testTopic,
-    ) = outboxService.newEvent(
+    ) = outboxService.insertRecord(
         key = key,
         value = value,
         topic = topic,
     )
 
-    private fun newEvents(
+    private fun newRecords(
         count: Int,
         topic: String = testTopic,
         key: UUID? = null,
     ) = (1..count).map {
-        newEvent(
+        newRecord(
             value = Value("Test-$it"),
             key = key ?: UUID.randomUUID(),
             topic = topic,
         )
     }
 
-    private fun verifyProducedEvent(event: OutboxEvent, topic: String = testTopic) = assertProduced(topic) {
+    private fun verifyProducedRecord(record: OutboxRecord, topic: String = testTopic) = assertProduced(topic) {
         AsyncUtils.eventually {
-            val value = objectMapper.readTree(it[event.key])
+            val value = objectMapper.readTree(it[record.key])
 
-            value shouldBe event.value
+            value shouldBe record.value
         }
     }
 }

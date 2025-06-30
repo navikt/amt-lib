@@ -1,4 +1,4 @@
-CREATE TABLE outbox_event
+CREATE TABLE outbox_record
 (
     id            SERIAL PRIMARY KEY,
     key           VARCHAR(255) NOT NULL,
@@ -13,4 +13,4 @@ CREATE TABLE outbox_event
     error_message TEXT
 );
 
-CREATE INDEX idx_outbox_status_created ON outbox_event (status, created_at);
+CREATE INDEX idx_outbox_status_created ON outbox_record (status, created_at);

@@ -36,21 +36,21 @@ class OutboxServiceTest {
     )
 
     @Test
-    fun `newEvent creates and persists an event with correct fields`() {
+    fun `insertRecord creates and persists an record with correct fields`() {
         val value = TestValue("hello", 42)
         val key = UUID.randomUUID()
         val topic = "test-topic"
 
-        val event = service.newEvent(key, value, topic)
+        val record = service.insertRecord(key, value, topic)
 
-        event.id shouldNotBe null
-        event.key shouldBe key.toString()
-        event.valueType shouldBe TestValue::class.simpleName
-        event.topic shouldBe topic
-        event.value["foo"].asText() shouldBe value.foo
-        event.value["bar"].asInt() shouldBe value.bar
+        record.id shouldNotBe null
+        record.key shouldBe key.toString()
+        record.valueType shouldBe TestValue::class.simpleName
+        record.topic shouldBe topic
+        record.value["foo"].asText() shouldBe value.foo
+        record.value["bar"].asInt() shouldBe value.bar
 
-        val persisted = repository.get(event.id)!!
+        val persisted = repository.get(record.id)!!
         persisted.key shouldBe key.toString()
         persisted.valueType shouldBe TestValue::class.simpleName
         persisted.topic shouldBe topic
@@ -59,7 +59,7 @@ class OutboxServiceTest {
     }
 
     @Test
-    fun `newEvent handles special characters in value fields`() {
+    fun `insertRecord handles special characters in value fields`() {
         data class SpecialCharValue(
             val foo: String,
         )
@@ -69,18 +69,18 @@ class OutboxServiceTest {
         val key = UUID.randomUUID()
         val topic = "special-char-topic"
 
-        val event = service.newEvent(key, value, topic)
-        event.value["foo"].asText() shouldBe specialString
+        val record = service.insertRecord(key, value, topic)
+        record.value["foo"].asText() shouldBe specialString
     }
 
     @Test
-    fun `newEvent works with large and nested values`() {
+    fun `insertRecord works with large and nested values`() {
         val value = LargeValue(List(1000) { it }, Nested("deep"))
         val key = UUID.randomUUID()
         val topic = "large-topic"
 
-        val event = service.newEvent(key, value, topic)
-        event.value["list"].size() shouldBe 1000
-        event.value["nested"]["inner"].asText() shouldBe "deep"
+        val record = service.insertRecord(key, value, topic)
+        record.value["list"].size() shouldBe 1000
+        record.value["nested"]["inner"].asText() shouldBe "deep"
     }
 }

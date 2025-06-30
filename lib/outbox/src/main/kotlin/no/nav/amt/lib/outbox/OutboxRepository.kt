@@ -7,23 +7,23 @@ import no.nav.amt.lib.utils.objectMapper
 import org.postgresql.util.PGobject
 
 internal class OutboxRepository {
-    private fun rowmapper(row: Row) = OutboxEvent(
-        id = OutboxEventId(row.long("id")),
+    private fun rowmapper(row: Row) = OutboxRecord(
+        id = OutboxRecordId(row.long("id")),
         key = row.string("key"),
         value = objectMapper.readTree(row.string("value")),
         valueType = row.string("value_type"),
         topic = row.string("topic"),
         createdAt = row.zonedDateTime("created_at"),
         processedAt = row.zonedDateTimeOrNull("processed_at"),
-        status = OutboxEventStatus.valueOf(row.string("status")),
+        status = OutboxRecordStatus.valueOf(row.string("status")),
         retryCount = row.int("retry_count"),
         errorMessage = row.stringOrNull("error_message"),
     )
 
-    internal fun insertNewEvent(event: NewOutboxEvent) = Database.query {
+    internal fun insertNewRecord(record: NewOutboxRecord) = Database.query {
         val sql =
             """
-            insert into outbox_event (
+            insert into outbox_record (
                 key, 
                 value, 
                 value_type, 
@@ -43,26 +43,26 @@ internal class OutboxRepository {
             """.trimIndent()
 
         val params = mapOf(
-            "key" to event.key,
-            "value" to toPGObject(event.value),
-            "value_type" to event.valueType,
-            "topic" to event.topic,
-            "status" to OutboxEventStatus.PENDING.name,
+            "key" to record.key,
+            "value" to toPGObject(record.value),
+            "value_type" to record.valueType,
+            "topic" to record.topic,
+            "status" to OutboxRecordStatus.PENDING.name,
             "retry_count" to 0,
         )
 
         it.single(queryOf(sql, params), this::rowmapper)
             ?: throw NoSuchElementException(
-                "Failed to insert OutboxEvent for key: ${event.key}, " +
-                    "valueType: ${event.valueType} and topic: ${event.topic}",
+                "Failed to insert OutboxRecord for key: ${record.key}, " +
+                    "valueType: ${record.valueType} and topic: ${record.topic}",
             )
     }
 
-    fun findUnprocessedEvents(limit: Int): List<OutboxEvent> = Database.query {
+    fun findUnprocessedRecords(limit: Int): List<OutboxRecord> = Database.query {
         val sql =
             """
-            select * from outbox_event
-            where status = '${OutboxEventStatus.PENDING.name}' or status = '${OutboxEventStatus.FAILED.name}'
+            select * from outbox_record
+            where status = '${OutboxRecordStatus.PENDING.name}' or status = '${OutboxRecordStatus.FAILED.name}'
             order by created_at asc
             limit :limit
             """.trimIndent()
@@ -72,28 +72,28 @@ internal class OutboxRepository {
         it.list(queryOf(sql, params), this::rowmapper)
     }
 
-    fun markAsProcessed(eventId: OutboxEventId) = Database.query {
+    fun markAsProcessed(recordId: OutboxRecordId) = Database.query {
         val sql =
             """
-            update outbox_event
+            update outbox_record
             set processed_at = current_timestamp, 
-                status = '${OutboxEventStatus.PROCESSED.name}',
+                status = '${OutboxRecordStatus.PROCESSED.name}',
                 modified_at = current_timestamp
             where id = :id
             """.trimIndent()
 
         val params = mapOf(
-            "id" to eventId.value,
+            "id" to recordId.value,
         )
 
         it.update(queryOf(sql, params))
     }
 
-    fun markAsFailed(eventId: OutboxEventId, errorMessage: String) = Database.query {
+    fun markAsFailed(recordId: OutboxRecordId, errorMessage: String) = Database.query {
         val sql =
             """
-            update outbox_event
-            set status = '${OutboxEventStatus.FAILED.name}', 
+            update outbox_record
+            set status = '${OutboxRecordStatus.FAILED.name}', 
                 error_message = :error_message, 
                 retry_count = retry_count + 1,
                 modified_at = current_timestamp
@@ -101,15 +101,15 @@ internal class OutboxRepository {
             """.trimIndent()
 
         val params = mapOf(
-            "id" to eventId.value,
+            "id" to recordId.value,
             "error_message" to errorMessage,
         )
 
         it.update(queryOf(sql, params))
     }
 
-    fun get(id: OutboxEventId): OutboxEvent? = Database.query {
-        val sql = "select * from outbox_event where id = :id"
+    fun get(id: OutboxRecordId): OutboxRecord? = Database.query {
+        val sql = "select * from outbox_record where id = :id"
         val params = mapOf("id" to id.value)
         it.single(queryOf(sql, params), this::rowmapper)
     }
