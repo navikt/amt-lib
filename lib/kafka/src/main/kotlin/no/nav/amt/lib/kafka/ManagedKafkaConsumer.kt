@@ -51,7 +51,7 @@ class ManagedKafkaConsumer<K, V>(
         running = false
     }
 
-    suspend fun close() {
+    private suspend fun close() {
         log.info("Closing consumer for topic: $topic.. ..")
         stop()
         return runState.await().also {
