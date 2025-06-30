@@ -48,7 +48,7 @@ class ManagedKafkaConsumerTest {
         val consumer = ManagedKafkaConsumer(topic, stringConsumerConfig) { k: String, v: String ->
             cache[k] = v
         }
-        consumer.run()
+        consumer.start()
 
         eventually {
             cache[key] shouldBe value
@@ -75,7 +75,7 @@ class ManagedKafkaConsumerTest {
         val consumer = ManagedKafkaConsumer(uuidTopic, config) { k: UUID, v: ByteArray ->
             cache[k] = v
         }
-        consumer.run()
+        consumer.start()
 
         eventually {
             cache[key] shouldBe value
@@ -96,7 +96,7 @@ class ManagedKafkaConsumerTest {
             antallGangerKallt++
             error("skal feile noen ganger")
         }
-        consumer.run()
+        consumer.start()
 
         eventually {
             antallGangerKallt shouldBe 2
