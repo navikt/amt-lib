@@ -23,7 +23,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * @param applicationIsReady A function that returns `true` if the application is ready to execute jobs.
  */
 class JobManager(
-    private val isLeader: () -> Boolean,
+    private val isLeader: suspend () -> Boolean,
     private val applicationIsReady: () -> Boolean,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
