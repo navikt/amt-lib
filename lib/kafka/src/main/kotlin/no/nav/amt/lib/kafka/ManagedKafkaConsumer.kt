@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -32,15 +31,6 @@ class ManagedKafkaConsumer<K, V>(
 
     val status: ConsumerStatus = ConsumerStatus()
     private lateinit var runState: Deferred<Unit>
-
-    init {
-        Runtime.getRuntime().addShutdownHook(
-            Thread {
-                log.info("Received shutdown signal for Kafka consumer $topic")
-                runBlocking { close() }
-            },
-        )
-    }
 
     fun start() {
         log.info("Starting consumer for topic: $topic")
