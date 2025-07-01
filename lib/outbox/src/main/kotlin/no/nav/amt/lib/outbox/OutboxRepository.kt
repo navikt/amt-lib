@@ -17,6 +17,7 @@ internal class OutboxRepository {
         processedAt = row.zonedDateTimeOrNull("processed_at"),
         status = OutboxRecordStatus.valueOf(row.string("status")),
         retryCount = row.int("retry_count"),
+        retriedAt = row.zonedDateTimeOrNull("retried_at"),
         errorMessage = row.stringOrNull("error_message"),
     )
 
@@ -96,7 +97,8 @@ internal class OutboxRepository {
             set status = '${OutboxRecordStatus.FAILED.name}', 
                 error_message = :error_message, 
                 retry_count = retry_count + 1,
-                modified_at = current_timestamp
+                modified_at = current_timestamp,
+                retried_at = current_timestamp
             where id = :id
             """.trimIndent()
 

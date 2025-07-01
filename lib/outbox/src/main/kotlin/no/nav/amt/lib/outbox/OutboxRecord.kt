@@ -19,6 +19,7 @@ import java.time.ZonedDateTime
  * processed_at TIMESTAMPTZ,
  * status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
  * retry_count INT NOT NULL DEFAULT 0,
+ * retried_at TIMESTAMPTZ,
  * error_message TEXT
  * );
  *
@@ -34,6 +35,7 @@ import java.time.ZonedDateTime
  * @property processedAt The timestamp when the record was successfully processed. Null if not yet processed.
  * @property status The current status of the record (e.g., PENDING, PROCESSED, FAILED).
  * @property retryCount The number of times the processing of this record has been attempted.
+ * @property retriedAt The last time the record was retried.
  * @property errorMessage An optional error message if the record processing failed.
  */
 data class OutboxRecord(
@@ -46,6 +48,7 @@ data class OutboxRecord(
     val processedAt: ZonedDateTime? = null,
     val status: OutboxRecordStatus,
     val retryCount: Int = 0,
+    val retriedAt: ZonedDateTime? = null,
     val errorMessage: String? = null,
 )
 
