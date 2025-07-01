@@ -56,4 +56,6 @@ class OutboxService {
      * @param errorMessage A message describing the reason for the failure.
      */
     fun markAsFailed(id: OutboxRecordId, errorMessage: String) = repository.markAsFailed(id, errorMessage)
+
+    fun getRecordsByTopicAndKey(topic: String, key: String): List<OutboxRecord> = repository.getRecordsByTopicAndKey(topic, key)
 }

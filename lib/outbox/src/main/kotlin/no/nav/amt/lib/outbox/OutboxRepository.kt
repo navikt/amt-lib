@@ -113,6 +113,12 @@ internal class OutboxRepository {
         val params = mapOf("id" to id.value)
         it.single(queryOf(sql, params), this::rowmapper)
     }
+
+    fun getRecordsByTopicAndKey(topic: String, key: String) = Database.query {
+        val sql = "select * from outbox_record where key = :key and topic = :topic"
+        val params = mapOf("key" to key, "topic" to topic)
+        it.list(queryOf(sql, params), this::rowmapper)
+    }
 }
 
 private fun toPGObject(value: Any?) = PGobject().also {
