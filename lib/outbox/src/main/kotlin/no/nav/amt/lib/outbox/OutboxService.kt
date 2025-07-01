@@ -1,7 +1,6 @@
 package no.nav.amt.lib.outbox
 
 import no.nav.amt.lib.utils.objectMapper
-import java.util.UUID
 
 /**
  * Provides a high-level API for interacting with the outbox.
@@ -14,15 +13,16 @@ class OutboxService {
     /**
      * Creates a new outbox event and persists it to the database.
      *
-     * @param T The type of the value being sent.
+     * @param K The type of the key being sent.
+     * @param V The type of the value being sent.
      * @param key The key of the event, typically a unique identifier for the entity.
      * @param value The value (payload) of the event.
      * @param topic The Kafka topic to which the event will be published.
      * @return The created [OutboxRecord].
      */
-    fun <T : Any> insertRecord(
-        key: UUID,
-        value: T,
+    fun <K : Any, V : Any> insertRecord(
+        key: K,
+        value: V,
         topic: String,
     ): OutboxRecord {
         val event = NewOutboxRecord(
