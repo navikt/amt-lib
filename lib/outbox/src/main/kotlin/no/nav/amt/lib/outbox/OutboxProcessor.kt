@@ -62,7 +62,7 @@ class OutboxProcessor(
                     }
                     process(record)
                 } catch (e: Exception) {
-                    service.markAsFailed(record.id, e.message ?: e::class.java.name)
+                    service.markAsFailed(record, e.message ?: e::class.java.name)
                     log.error("Failed to process outbox-record ${record.id}", e)
                     failedKeys.add(KeyTopicPair(record.key, record.topic))
                 }
@@ -78,7 +78,7 @@ class OutboxProcessor(
             key = record.key,
             value = objectMapper.writeValueAsString(record.value),
         )
-        service.markAsProcessed(record.id)
+        service.markAsProcessed(record)
         log.info("Processed outbox-record ${record.id} for key ${record.key} on topic ${record.topic}")
     }
 
