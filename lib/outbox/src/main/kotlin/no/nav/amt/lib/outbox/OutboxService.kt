@@ -1,5 +1,7 @@
 package no.nav.amt.lib.outbox
 
+import no.nav.amt.lib.outbox.metrics.NoOpOutboxMeter
+import no.nav.amt.lib.outbox.metrics.OutboxMeter
 import no.nav.amt.lib.utils.objectMapper
 
 /**
@@ -7,7 +9,9 @@ import no.nav.amt.lib.utils.objectMapper
  * This service simplifies the creation and management of outbox events,
  * abstracting away the underlying repository details.
  */
-class OutboxService {
+class OutboxService(
+    private val meter: OutboxMeter = NoOpOutboxMeter(),
+) {
     private val repository = OutboxRepository()
 
     /**
@@ -31,7 +35,7 @@ class OutboxService {
             topic = topic,
             value = objectMapper.readTree(objectMapper.writeValueAsString(value)),
         )
-        return repository.insertNewRecord(event)
+        return repository.insertNewRecord(event).also { meter.incrementNewRecords(topic) }
     }
 
     /**
@@ -43,19 +47,25 @@ class OutboxService {
     fun findUnprocessedRecords(limit: Int): List<OutboxRecord> = repository.findUnprocessedRecords(limit)
 
     /**
-     * Marks an outbox event as processed.
+     * Marks an outbox record as processed.
      *
-     * @param id The ID of the event to mark as processed.
+     * @param record The record to mark as processed.
      */
-    fun markAsProcessed(id: OutboxRecordId) = repository.markAsProcessed(id)
+    fun markAsProcessed(record: OutboxRecord) {
+        repository.markAsProcessed(record.id)
+        meter.incrementProcessedRecords(record.topic, OutboxRecordStatus.PROCESSED)
+    }
 
     /**
-     * Marks an outbox event as failed.
+     * Marks an outbox record as failed.
      *
-     * @param id The ID of the event.
+     * @param record The failed record.
      * @param errorMessage A message describing the reason for the failure.
      */
-    fun markAsFailed(id: OutboxRecordId, errorMessage: String) = repository.markAsFailed(id, errorMessage)
+    fun markAsFailed(record: OutboxRecord, errorMessage: String) {
+        repository.markAsFailed(record.id, errorMessage)
+        meter.incrementProcessedRecords(record.topic, OutboxRecordStatus.FAILED)
+    }
 
     fun getRecordsByTopicAndKey(topic: String, key: String): List<OutboxRecord> = repository.getRecordsByTopicAndKey(topic, key)
 }
