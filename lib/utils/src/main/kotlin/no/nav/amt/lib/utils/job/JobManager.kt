@@ -7,7 +7,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.time.Duration
@@ -51,7 +50,7 @@ class JobManager(
         scope
             .launch {
                 delay(initialDelay.toMillis())
-                while (isActive) {
+                while (true) {
                     val startTime = System.currentTimeMillis()
                     if (isLeader() && applicationIsReady()) {
                         try {
@@ -63,6 +62,8 @@ class JobManager(
                         } catch (e: Exception) {
                             log.error("Noe gikk galt med jobb: $name", e)
                         }
+                    } else {
+                        log.info("Jobb $name ble ikke kjørt: leader: ${isLeader()} - application is ready: ${applicationIsReady()}")
                     }
                     val executionTime = System.currentTimeMillis() - startTime
                     val delayTime = (period.toMillis() - executionTime).coerceAtLeast(0)
@@ -74,7 +75,7 @@ class JobManager(
     /**
      * Stops all jobs that have been started by this JobManager.
      *
-     * This function cancels the coroutine scope, which will gracefully stop all running jobs.
+     * This function gracefully stops all running jobs by cancelling them and waiting for them to finish.
      */
     suspend fun stopJobs() {
         log.info("Stopping all jobs...")

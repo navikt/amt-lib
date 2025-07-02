@@ -3,6 +3,7 @@ package no.nav.amt.lib.utils.job
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import java.time.Duration
@@ -11,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class JobManagerTest {
     @Test
-    fun `startJob - to jobber - skal kjøre samtidig`() = runTest {
+    fun `startJob - to jobber - skal kjøre samtidig`(): Unit = runBlocking {
         val jobManager = JobManager(isLeader = { true }, applicationIsReady = { true })
         val counter = AtomicInteger(0)
 
@@ -31,7 +32,7 @@ class JobManagerTest {
             counter.incrementAndGet()
         }
 
-        Thread.sleep(150)
+        delay(150)
 
         jobManager.stopJobs()
 
