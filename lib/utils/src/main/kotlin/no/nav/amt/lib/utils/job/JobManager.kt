@@ -54,7 +54,10 @@ class JobManager(
                     val startTime = System.currentTimeMillis()
                     if (isLeader() && applicationIsReady()) {
                         try {
-                            log.info("Kjører jobb: $name")
+                            if (period > Duration.ofHours(1)) {
+                                // Ikke logg for jobber som kjører oftere enn hver time (blir unødvendig støy)
+                                log.info("Kjører jobb: $name")
+                            }
                             job()
                         } catch (e: CancellationException) {
                             log.info("Jobb $name ble avbrutt")
@@ -62,8 +65,6 @@ class JobManager(
                         } catch (e: Exception) {
                             log.error("Noe gikk galt med jobb: $name", e)
                         }
-                    } else {
-                        log.info("Jobb $name ble ikke kjørt: leader: ${isLeader()} - application is ready: ${applicationIsReady()}")
                     }
                     val executionTime = System.currentTimeMillis() - startTime
                     val delayTime = (period.toMillis() - executionTime).coerceAtLeast(0)
