@@ -28,6 +28,7 @@ class JobManager(
     private val log = LoggerFactory.getLogger(javaClass)
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val jobs = CopyOnWriteArrayList<Job>()
+    private var isRunning = true
 
     /**
      * Starts a new recurring job.
@@ -50,12 +51,12 @@ class JobManager(
         scope
             .launch {
                 delay(initialDelay.toMillis())
-                while (true) {
+                while (isRunning) {
                     val startTime = System.currentTimeMillis()
                     if (isLeader() && applicationIsReady()) {
                         try {
-                            if (period > Duration.ofHours(1)) {
-                                // Ikke logg for jobber som kjører oftere enn hver time (blir unødvendig støy)
+                            if (period > Duration.ofMinutes(5)) {
+                                // Ikke logg for jobber som kjører oftere enn hver 5. minutt (blir unødvendig støy)
                                 log.info("Kjører jobb: $name")
                             }
                             job()
@@ -70,6 +71,7 @@ class JobManager(
                     val delayTime = (period.toMillis() - executionTime).coerceAtLeast(0)
                     delay(delayTime)
                 }
+                log.info("Jobb $name er stoppet")
             }.also { jobs.add(it) }
     }
 
@@ -80,6 +82,7 @@ class JobManager(
      */
     suspend fun stopJobs() {
         log.info("Stopping all jobs...")
+        isRunning = false
         jobs.forEach { it.cancelAndJoin() }
         log.info("All jobs have been stopped.")
     }
