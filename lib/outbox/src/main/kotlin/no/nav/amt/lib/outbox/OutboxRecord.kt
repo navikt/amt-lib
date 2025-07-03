@@ -1,7 +1,7 @@
 package no.nav.amt.lib.outbox
 
 import com.fasterxml.jackson.databind.JsonNode
-import java.time.ZonedDateTime
+import java.time.LocalDateTime
 
 /**
  * Represents an record that is stored in the outbox, waiting to be published.
@@ -44,11 +44,11 @@ data class OutboxRecord(
     val value: JsonNode,
     val valueType: String,
     val topic: String,
-    val createdAt: ZonedDateTime,
-    val processedAt: ZonedDateTime? = null,
+    val createdAt: LocalDateTime,
+    val processedAt: LocalDateTime? = null,
     val status: OutboxRecordStatus,
     val retryCount: Int = 0,
-    val retriedAt: ZonedDateTime? = null,
+    val retriedAt: LocalDateTime? = null,
     val errorMessage: String? = null,
 )
 

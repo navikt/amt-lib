@@ -10,6 +10,8 @@ dependencies {
     api(project(":lib:utils"))
     api(project(":lib:kafka"))
     api(libs.prometheus.metrics.core)
+    implementation(libs.prometheus.metrics.instrumentation)
+    implementation(libs.prometheus.metrics.exporter)
     implementation(libs.logback)
     implementation(libs.jackson.jsr310)
     implementation(libs.kotliquery)

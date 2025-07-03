@@ -1,8 +1,10 @@
 package no.nav.amt.lib.outbox
 
 import io.kotest.matchers.shouldBe
+import io.prometheus.metrics.model.registry.PrometheusRegistry
 import no.nav.amt.lib.kafka.Producer
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
+import no.nav.amt.lib.outbox.metrics.PrometheusOutboxMeter
 import no.nav.amt.lib.outbox.utils.assertProduced
 import no.nav.amt.lib.testing.AsyncUtils
 import no.nav.amt.lib.testing.SingletonKafkaProvider
@@ -11,7 +13,7 @@ import no.nav.amt.lib.testing.shouldBeCloseTo
 import no.nav.amt.lib.utils.job.JobManager
 import no.nav.amt.lib.utils.objectMapper
 import org.junit.jupiter.api.Test
-import java.time.ZonedDateTime
+import java.time.LocalDateTime
 import java.util.UUID
 
 class OutboxProcessorTest {
@@ -20,8 +22,9 @@ class OutboxProcessorTest {
         SingletonKafkaProvider.start()
     }
 
+    private val prometheusRegistry = PrometheusRegistry()
     private val outboxRepository = OutboxRepository()
-    private val outboxService = OutboxService()
+    private val outboxService = OutboxService(PrometheusOutboxMeter(prometheusRegistry))
 
     private val kafakConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
     private val kafkaProducer = Producer<String, String>(kafakConfig)
@@ -41,7 +44,7 @@ class OutboxProcessorTest {
         outboxProcessor.processRecords()
 
         val processedRecord = outboxRepository.get(record.id)!!
-        processedRecord.processedAt!! shouldBeCloseTo ZonedDateTime.now()
+        processedRecord.processedAt!! shouldBeCloseTo LocalDateTime.now()
         processedRecord.status shouldBe OutboxRecordStatus.PROCESSED
         verifyProducedRecord(record)
     }
@@ -77,7 +80,7 @@ class OutboxProcessorTest {
         records.forEach { record ->
             val processedRecord = outboxRepository.get(record.id)!!
             processedRecord.status shouldBe OutboxRecordStatus.PROCESSED
-            processedRecord.processedAt!! shouldBeCloseTo ZonedDateTime.now()
+            processedRecord.processedAt!! shouldBeCloseTo LocalDateTime.now()
             verifyProducedRecord(record)
         }
     }
