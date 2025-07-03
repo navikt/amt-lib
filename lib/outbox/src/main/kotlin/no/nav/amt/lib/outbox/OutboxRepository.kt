@@ -13,11 +13,11 @@ internal class OutboxRepository {
         value = objectMapper.readTree(row.string("value")),
         valueType = row.string("value_type"),
         topic = row.string("topic"),
-        createdAt = row.zonedDateTime("created_at"),
-        processedAt = row.zonedDateTimeOrNull("processed_at"),
+        createdAt = row.localDateTime("created_at"),
+        processedAt = row.localDateTimeOrNull("processed_at"),
         status = OutboxRecordStatus.valueOf(row.string("status")),
         retryCount = row.int("retry_count"),
-        retriedAt = row.zonedDateTimeOrNull("retried_at"),
+        retriedAt = row.localDateTimeOrNull("retried_at"),
         errorMessage = row.stringOrNull("error_message"),
     )
 

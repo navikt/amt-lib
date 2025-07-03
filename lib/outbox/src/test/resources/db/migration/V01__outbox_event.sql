@@ -5,12 +5,12 @@ CREATE TABLE outbox_record
     value         JSONB        NOT NULL,
     value_type    VARCHAR(255) NOT NULL,
     topic         VARCHAR(255) NOT NULL,
-    created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    modified_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    processed_at  TIMESTAMPTZ,
+    created_at    timestamp with time zone  NOT NULL DEFAULT NOW(),
+    modified_at   timestamp with time zone  NOT NULL DEFAULT NOW(),
+    processed_at  timestamp with time zone,
     status        VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
     retry_count   INT          NOT NULL DEFAULT 0,
-    retried_at    TIMESTAMPTZ,
+    retried_at    timestamp with time zone,
     error_message TEXT
 );
 

@@ -2,8 +2,9 @@ package no.nav.amt.lib.outbox
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.prometheus.metrics.model.registry.PrometheusRegistry
+import no.nav.amt.lib.outbox.metrics.PrometheusOutboxMeter
 import no.nav.amt.lib.testing.SingletonPostgres16Container
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -21,14 +22,9 @@ class OutboxServiceTest {
         SingletonPostgres16Container
     }
 
-    private lateinit var repository: OutboxRepository
-    private lateinit var service: OutboxService
-
-    @BeforeEach
-    fun setup() {
-        repository = OutboxRepository()
-        service = OutboxService()
-    }
+    private val prometheusRegistry = PrometheusRegistry()
+    private val repository: OutboxRepository = OutboxRepository()
+    private val service: OutboxService = OutboxService(PrometheusOutboxMeter(prometheusRegistry))
 
     data class TestValue(
         val foo: String,

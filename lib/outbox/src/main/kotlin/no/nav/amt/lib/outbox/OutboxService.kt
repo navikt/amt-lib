@@ -1,7 +1,7 @@
 package no.nav.amt.lib.outbox
 
-import no.nav.amt.lib.outbox.metrics.NoOpOutboxMeter
 import no.nav.amt.lib.outbox.metrics.OutboxMeter
+import no.nav.amt.lib.outbox.metrics.PrometheusOutboxMeter
 import no.nav.amt.lib.utils.objectMapper
 
 /**
@@ -10,7 +10,7 @@ import no.nav.amt.lib.utils.objectMapper
  * abstracting away the underlying repository details.
  */
 class OutboxService(
-    private val meter: OutboxMeter = NoOpOutboxMeter(),
+    private val meter: OutboxMeter = PrometheusOutboxMeter(),
 ) {
     private val repository = OutboxRepository()
 
