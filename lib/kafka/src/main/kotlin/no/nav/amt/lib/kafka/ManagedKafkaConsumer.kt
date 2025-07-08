@@ -15,13 +15,12 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
 import java.time.Duration
-import kotlin.RuntimeException
 
 class ManagedKafkaConsumer<K, V>(
     private val topic: String,
     private val config: Map<String, *>,
-    private val consume: suspend (key: K, value: V) -> Unit,
-) {
+    private val consume: suspend (key: K, value: V) -> Unit = { _, _ -> },
+) : Consumer<K, V> {
     private val log = LoggerFactory.getLogger(javaClass)
     private val job = Job()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -32,16 +31,20 @@ class ManagedKafkaConsumer<K, V>(
     val status: ConsumerStatus = ConsumerStatus()
     private lateinit var runState: Deferred<Unit>
 
-    fun start() {
+    override fun start() {
         log.info("Starting consumer for topic: $topic")
         runState = run()
+    }
+
+    override suspend fun consume(key: K, value: V) {
+        this.consume.invoke(key, value)
     }
 
     fun stop() {
         running = false
     }
 
-    suspend fun close() {
+    override suspend fun close() {
         log.info("Closing consumer for topic: $topic.. ..")
         stop()
         return runState.await().also {
@@ -64,7 +67,7 @@ class ManagedKafkaConsumer<K, V>(
             while (running) {
                 poll(consumer)
             }
-        } catch (e: WakeupException) {
+        } catch (_: WakeupException) {
             log.info("Consumer for $topic is exiting")
             stop()
         } catch (t: Throwable) {
@@ -77,7 +80,7 @@ class ManagedKafkaConsumer<K, V>(
         if (status.isFailure) {
             log.info(
                 "Consumer status for topic $topic is failure, " +
-                    "delaying ${status.backoffDuration}ms before retrying",
+                        "delaying ${status.backoffDuration}ms before retrying",
             )
             delay(status.backoffDuration)
         }
@@ -140,17 +143,17 @@ class ManagedKafkaConsumer<K, V>(
             consume(record.key(), record.value())
             log.info(
                 "Consumed record for " +
-                    "topic=${record.topic()} " +
-                    "key=${record.key()} " +
-                    "partition=${record.partition()} " +
-                    "offset=${record.offset()}",
+                        "topic=${record.topic()} " +
+                        "key=${record.key()} " +
+                        "partition=${record.partition()} " +
+                        "offset=${record.offset()}",
             )
         } catch (t: Throwable) {
             val msg = "Failed to consume record for " +
-                "topic=${record.topic()} " +
-                "key=${record.key()} " +
-                "partition=${record.partition()} " +
-                "offset=${record.offset()}"
+                    "topic=${record.topic()} " +
+                    "key=${record.key()} " +
+                    "partition=${record.partition()} " +
+                    "offset=${record.offset()}"
             throw ConsumerProcessingException(msg, t)
         }
     }
