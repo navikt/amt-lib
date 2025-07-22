@@ -2,14 +2,14 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-junit-jupiter-engine = "5.13.3"
+junit-jupiter-engine = "5.13.4"
 kotest-version = "5.9.1"
 kafka-clients-version = "4.0.0"
 kotlinx-version = "1.10.2"
 logback-version = "1.5.18"
 testcontainers-version = "1.21.3"
 flyway-version = "11.10.3"
-hikari-version = "6.3.0"
+hikari-version = "6.3.1"
 kotliquery-version = "1.9.1"
 postgres-version = "42.7.7"
 kotlin-version = "2.2.0"
