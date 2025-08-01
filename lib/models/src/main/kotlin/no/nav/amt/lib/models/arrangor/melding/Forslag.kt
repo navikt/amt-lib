@@ -76,6 +76,12 @@ data class Forslag(
         val harFullfort: Boolean?,
     ) : Endring
 
+    data class EndreAvslutning(
+        val aarsak: EndringAarsak?,
+        val harDeltatt: Boolean?,
+        val harFullfort: Boolean?,
+    ) : Endring
+
     data class IkkeAktuell(
         val aarsak: EndringAarsak,
     ) : Endring
