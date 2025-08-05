@@ -5,6 +5,8 @@ import no.nav.amt.lib.models.arrangor.melding.EndringFraArrangor
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.arrangor.melding.Vurderingstype
 import no.nav.amt.lib.models.deltaker.DeltakerEndring
+import no.nav.amt.lib.models.deltaker.DeltakerEndring.Aarsak
+import no.nav.amt.lib.models.deltaker.DeltakerEndring.Endring
 import no.nav.amt.lib.models.tiltakskoordinator.EndringFraTiltakskoordinator
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -108,6 +110,14 @@ sealed interface HendelseType {
         override val endringFraForslag: Forslag.Endring?,
     ) : HendelseMedForslag
 
+    data class EndreAvslutning(
+        val aarsak: Aarsak?,
+        val harFullfort: Boolean,
+        override val begrunnelseFraNav: String?,
+        override val begrunnelseFraArrangor: String?,
+        override val endringFraForslag: Forslag.Endring?,
+    ) : HendelseMedForslag
+
     data class AvbrytDeltakelse(
         val aarsak: DeltakerEndring.Aarsak?,
         val sluttdato: LocalDate,
@@ -163,6 +173,14 @@ fun DeltakerEndring.toHendelseEndring(utkast: UtkastDto? = null) = when (val end
     is DeltakerEndring.Endring.AvsluttDeltakelse -> HendelseType.AvsluttDeltakelse(
         aarsak = endring.aarsak,
         sluttdato = endring.sluttdato,
+        begrunnelseFraNav = endring.begrunnelse,
+        begrunnelseFraArrangor = forslag?.begrunnelse,
+        endringFraForslag = forslag?.endring,
+    )
+
+    is DeltakerEndring.Endring.EndreAvslutning -> HendelseType.EndreAvslutning(
+        aarsak = endring.aarsak,
+        harFullfort = endring.harFullfort,
         begrunnelseFraNav = endring.begrunnelse,
         begrunnelseFraArrangor = forslag?.begrunnelse,
         endringFraForslag = forslag?.endring,
