@@ -1,5 +1,4 @@
 plugins {
-    alias(libs.plugins.jvm)
     alias(libs.plugins.serialization)
     id("amt-lib.conventions")
 }
@@ -14,8 +13,4 @@ dependencies {
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.assertions.json)
     testImplementation(libs.jackson.kotlin)
-}
-
-tasks.named<Test>("test") {
-    useJUnitPlatform()
 }

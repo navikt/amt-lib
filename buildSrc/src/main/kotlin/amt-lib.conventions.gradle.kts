@@ -1,4 +1,3 @@
-import org.gradle.jvm.toolchain.JavaLanguageVersion
 import java.net.URI
 
 group = "no.nav.amt.lib"
@@ -6,6 +5,7 @@ group = "no.nav.amt.lib"
 plugins {
     `java-library`
     `maven-publish`
+    kotlin
 }
 
 repositories {
@@ -45,4 +45,13 @@ sourceSets {
             setSrcDirs(setOf(file("src/main/resource"), file("../../shared-resources")))
         }
     }
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+    jvmArgs(
+        "-Xshare:off",
+        "-XX:+EnableDynamicAgentLoading",
+        "-Dkotest.framework.classpath.scanning.autoscan.disable=true",
+    )
 }
