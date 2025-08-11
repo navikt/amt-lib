@@ -5,6 +5,8 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":lib:models"))
+
     implementation(libs.kafka.clients)
     implementation(libs.kotlinx.coroutines)
     implementation(libs.logback)
