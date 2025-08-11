@@ -6,3 +6,7 @@ plugins {
 repositories {
     mavenCentral()
 }
+
+dependencies {
+    implementation(libs.kotlin.jvm)
+}
