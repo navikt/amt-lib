@@ -19,7 +19,7 @@ import java.time.Duration
 class ManagedKafkaConsumer<K, V>(
     private val topic: String,
     private val config: Map<String, *>,
-    private val consume: suspend (key: K, value: V) -> Unit = { _, _ -> },
+    private val consume: suspend (key: K, value: V) -> Unit,
 ) : Consumer<K, V> {
     private val log = LoggerFactory.getLogger(javaClass)
     private val job = Job()
@@ -36,9 +36,7 @@ class ManagedKafkaConsumer<K, V>(
         runState = run()
     }
 
-    override suspend fun consume(key: K, value: V) {
-        this.consume.invoke(key, value)
-    }
+    override suspend fun consume(key: K, value: V) = this.consume.invoke(key, value)
 
     fun stop() {
         running = false
