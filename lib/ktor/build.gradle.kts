@@ -6,13 +6,21 @@ plugins {
 }
 
 dependencies {
-    api(project(":lib:viewmodels"))
+    api(project(":lib:models"))
+    api(project(":lib:utils"))
     api(libs.jackson.kotlin)
-    api(libs.jackson.jsr310)
     api(libs.caffeine)
     api(libs.logback)
     api(libs.ktor.client.core)
-    testImplementation(libs.kotest.runner.junit5)
+
+    testImplementation(project(":lib:testing"))
+    testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.mockk)
+
+    testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.ktor.serialization.jackson)
 }
 
 ktlint {

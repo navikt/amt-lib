@@ -4,12 +4,13 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import no.nav.amt.lib.models.person.address.Adressebeskyttelse
+import no.nav.amt.lib.testing.testdata.person.PersonModelsTestData.brukerInTest
+import no.nav.amt.lib.testing.testdata.person.PersonModelsTestData.oppfolgingsperiodeInTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.time.LocalDateTime
-import java.util.UUID
 
 class NavBrukerTest {
     @Nested
@@ -47,25 +48,25 @@ class NavBrukerTest {
     inner class GetBeskyttelsesmarkeringer {
         @Test
         fun `getBeskyttelsesmarkeringer skal returnere tom liste nar adressebeskyttelse er null`() {
-            brukerInTest.getBeskyttelsesmarkeringer() shouldBe emptyList()
+            brukerInTest.beskyttelsesmarkeringer shouldBe emptyList()
         }
 
         @Test
         fun `getBeskyttelsesmarkeringer skal returnere en liste med FORTROLIG`() {
             val bruker = brukerInTest.copy(adressebeskyttelse = Adressebeskyttelse.FORTROLIG)
-            bruker.getBeskyttelsesmarkeringer() shouldBe listOf(Beskyttelsesmarkering.FORTROLIG)
+            bruker.beskyttelsesmarkeringer shouldBe listOf(Beskyttelsesmarkering.FORTROLIG)
         }
 
         @Test
         fun `getBeskyttelsesmarkeringer skal returnere en liste med STRENGT_FORTROLIG`() {
             val bruker = brukerInTest.copy(adressebeskyttelse = Adressebeskyttelse.STRENGT_FORTROLIG)
-            bruker.getBeskyttelsesmarkeringer() shouldBe listOf(Beskyttelsesmarkering.STRENGT_FORTROLIG)
+            bruker.beskyttelsesmarkeringer shouldBe listOf(Beskyttelsesmarkering.STRENGT_FORTROLIG)
         }
 
         @Test
         fun `getBeskyttelsesmarkeringer skal returnere en liste med STRENGT_FORTROLIG_UTLAND`() {
             val bruker = brukerInTest.copy(adressebeskyttelse = Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
-            bruker.getBeskyttelsesmarkeringer() shouldBe listOf(Beskyttelsesmarkering.STRENGT_FORTROLIG_UTLAND)
+            bruker.beskyttelsesmarkeringer shouldBe listOf(Beskyttelsesmarkering.STRENGT_FORTROLIG_UTLAND)
         }
 
         @Test
@@ -75,7 +76,7 @@ class NavBrukerTest {
                 erSkjermet = true,
             )
 
-            bruker.getBeskyttelsesmarkeringer() shouldBe listOf(
+            bruker.beskyttelsesmarkeringer shouldBe listOf(
                 Beskyttelsesmarkering.STRENGT_FORTROLIG_UTLAND,
                 Beskyttelsesmarkering.SKJERMET,
             )
@@ -153,16 +154,14 @@ class NavBrukerTest {
     inner class HarAktivOppfolgingsperiode {
         @Test
         fun `harAktivOppfolgingsperiode skal returnere false nar oppfolgingsperioder er tom`() {
-            brukerInTest
-                .harAktivOppfolgingsperiode()
-                .shouldBeFalse()
+            brukerInTest.harAktivOppfolgingsperiode.shouldBeFalse()
         }
 
         @Test
         fun `harAktivOppfolgingsperiode skal returnere true nar aktiv oppfolgingsperiode`() {
             brukerInTest
                 .copy(oppfolgingsperioder = listOf(oppfolgingsperiodeInTest))
-                .harAktivOppfolgingsperiode()
+                .harAktivOppfolgingsperiode
                 .shouldBeTrue()
         }
 
@@ -172,33 +171,8 @@ class NavBrukerTest {
 
             brukerInTest
                 .copy(oppfolgingsperioder = listOf(oppfolgingsperiode))
-                .harAktivOppfolgingsperiode()
+                .harAktivOppfolgingsperiode
                 .shouldBeFalse()
         }
-    }
-
-    companion object {
-        private val oppfolgingsperiodeInTest = Oppfolgingsperiode(
-            id = UUID.randomUUID(),
-            startdato = LocalDateTime.now(),
-            sluttdato = null,
-        )
-
-        private val brukerInTest = NavBruker(
-            personId = UUID.randomUUID(),
-            personident = "~personident~",
-            fornavn = "~fornavn~",
-            mellomnavn = "~mellomnavn~",
-            etternavn = "~etternavn~",
-            navVeilederId = UUID.randomUUID(),
-            navEnhetId = UUID.randomUUID(),
-            telefon = "~telefon~",
-            epost = "~epost~",
-            erSkjermet = false,
-            adresse = null,
-            adressebeskyttelse = null,
-            oppfolgingsperioder = emptyList(),
-            innsatsgruppe = null,
-        )
     }
 }

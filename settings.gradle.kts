@@ -30,6 +30,3 @@ findProject(":lib:models")?.name = "models"
 
 include("lib:outbox")
 findProject(":lib:outbox")?.name = "outbox"
-
-include("lib:viewmodels")
-findProject(":lib:viewmodels")?.name = "viewmodels"
