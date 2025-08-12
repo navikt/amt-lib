@@ -1,5 +1,6 @@
 package no.nav.amt.lib.ktor.auth
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -17,18 +18,23 @@ class AzureAdTokenClient(
     private val clientId: String,
     private val clientSecret: String,
     private val httpClient: HttpClient,
-) {
-    private val log = LoggerFactory.getLogger(javaClass)
-
-    private val tokenCache = Caffeine
+    private val tokenCache: Cache<String, AzureAdToken> = Caffeine
         .newBuilder()
         .expireAfterWrite(Duration.ofMinutes(55))
-        .build<String, AzureAdToken>()
+        .build(),
+) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     suspend fun getMachineToMachineToken(scope: String): String {
         val token = tokenCache.getIfPresent(scope) ?: createMachineToMachineToken(scope)
 
         return "${token.tokenType} ${token.accessToken}" // i.e. "Bearer XYZ"
+    }
+
+    suspend fun getMachineToMachineTokenWithoutType(scope: String): String {
+        val token = tokenCache.getIfPresent(scope) ?: createMachineToMachineToken(scope)
+
+        return token.accessToken // i.e. "XYZ"
     }
 
     private suspend fun createMachineToMachineToken(scope: String): AzureAdToken {

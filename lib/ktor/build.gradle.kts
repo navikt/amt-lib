@@ -10,9 +10,11 @@ dependencies {
     api(libs.caffeine)
     api(libs.logback)
     api(libs.ktor.client.core)
+    api(libs.ktor.server.core)
 
     testImplementation(project(":lib:testing"))
     testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.junit.jupiter.params)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.mockk)
 

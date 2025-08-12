@@ -44,6 +44,8 @@ prometheus-metrics-core = { module = "io.prometheus:prometheus-metrics-core", ve
 prometheus-metrics-instrumentation = { module = "io.prometheus:prometheus-metrics-instrumentation-jvm", version.ref = "prometheus-version" }
 prometheus-metrics-exporter = { module = "io.prometheus:prometheus-metrics-exporter-httpserver", version.ref = "prometheus-version" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor-version" }
+ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor-version" }
+
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine-version" }
 
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor-version" }

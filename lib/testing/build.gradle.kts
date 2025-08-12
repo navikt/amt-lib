@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation(project(":lib:models"))
+    implementation(project(":lib:utils"))
 
     implementation(libs.kafka.clients)
     implementation(libs.kotlinx.coroutines.core)
@@ -19,7 +20,7 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flyway.postgres)
     implementation(libs.kotliquery)
-    implementation(project(":lib:utils"))
+    api(libs.caffeine)
 
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.junit.jupiter.engine)
