@@ -1,12 +1,13 @@
 plugins {
-    alias(libs.plugins.jvm)
     alias(libs.plugins.serialization)
     id("amt-lib.conventions")
 }
 
 dependencies {
+    implementation(project(":lib:models"))
+
     implementation(libs.kafka.clients)
-    implementation(libs.kotlinx.coroutines)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.logback)
     implementation(libs.kotest.assertions.core)
     implementation(libs.kotest.assertions.json)
@@ -22,8 +23,4 @@ dependencies {
 
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.junit.jupiter.engine)
-}
-
-tasks.named<Test>("test") {
-    useJUnitPlatform()
 }

@@ -48,7 +48,7 @@ jobs:
       - name: Build and Publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew publish -Pversion="${{ env.VERSION }}"
+        run: ./gradlew publish -Pversion="${{ env.VERSION }}" --no-configuration-cache
 
       - name: Create release
         uses: softprops/action-gh-release@v2

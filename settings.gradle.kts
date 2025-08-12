@@ -12,13 +12,21 @@ plugins {
 
 rootProject.name = "amt-lib"
 include("lib")
+
 include("lib:kafka")
 findProject(":lib:kafka")?.name = "kafka"
+
 include("lib:testing")
 findProject(":lib:testing")?.name = "testing"
+
 include("lib:utils")
 findProject(":lib:utils")?.name = "utils"
+
+include("lib:ktor")
+findProject(":lib:ktor")?.name = "ktor"
+
 include("lib:models")
 findProject(":lib:models")?.name = "models"
+
 include("lib:outbox")
 findProject(":lib:outbox")?.name = "outbox"
