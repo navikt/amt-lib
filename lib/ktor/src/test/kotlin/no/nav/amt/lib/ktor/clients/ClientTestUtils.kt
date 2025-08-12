@@ -41,6 +41,14 @@ object ClientTestUtils {
                         )
                     }
 
+                    is String -> {
+                        respond(
+                            content = ByteReadChannel(responseBody),
+                            status = statusCode,
+                            headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+                        )
+                    }
+
                     else -> {
                         respond(
                             content = ByteReadChannel(objectMapper.writeValueAsBytes(responseBody)),

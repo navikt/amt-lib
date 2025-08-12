@@ -1,97 +1,129 @@
 package no.nav.amt.lib.ktor.auth
 
+import com.github.benmanes.caffeine.cache.Cache
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
+import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
-import io.ktor.serialization.jackson.jackson
-import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.runBlocking
-import no.nav.amt.lib.utils.applicationConfig
+import no.nav.amt.lib.ktor.clients.ClientTestUtils.createMockHttpClient
+import no.nav.amt.lib.testing.utils.CountingCache
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class AzureAdTokenClientTest {
-    @Test
-    fun `getMachineToMachineToken - skal parse Azure AD token response riktig og lage token`(): Unit = runBlocking {
-        val mockEngine = MockEngine {
-            respond(
-                content = ByteReadChannel(
-                    """
-                    {
-                        "token_type":"Bearer",
-                        "access_token":"XYZ",
-                        "expires_in": 3599
-                    }
-                    """.trimIndent(),
-                ),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
-            )
-        }
-
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                jackson { applicationConfig() }
+    @Nested
+    inner class GetMachineToMachineToken {
+        @Test
+        fun `getMachineToMachineToken skal kaste feil hvis respons har feilkode`() {
+            runFailureTest { adTokenClient ->
+                adTokenClient.getMachineToMachineToken(FAKE_SCOPE)
             }
         }
 
-        val azureAdTokenClient = AzureAdTokenClient(
-            azureAdTokenUrl = "https://fake-url.com/token",
-            clientId = "fake-client-id",
-            clientSecret = "fake-client-secret",
-            httpClient = httpClient,
-        )
+        @Test
+        fun `getMachineToMachineToken skal returnere token hvis respons er OK`() {
+            runHappyPathTest(
+                "Bearer $FAKE_TOKEN",
+            ) { adTokenClient ->
+                adTokenClient.getMachineToMachineToken(FAKE_SCOPE)
+            }
+        }
 
-        val token = azureAdTokenClient.getMachineToMachineToken("fake-scope")
+        @Test
+        fun `getMachineToMachineToken skal token fra cache`(): Unit = runBlocking {
+            val countingCache = CountingCache<String, AzureAdToken>()
 
-        token shouldBe "Bearer XYZ"
+            val client = createAzureAdTokenClient(
+                statusCode = HttpStatusCode.OK,
+                cache = countingCache,
+            )
+
+            client.getMachineToMachineToken(FAKE_SCOPE)
+            client.getMachineToMachineToken(FAKE_SCOPE)
+
+            countingCache.putCount shouldBe 1
+        }
     }
 
-    @Test
-    fun `getMachineToMachineToken - skal skal bruke cachet token etter forste kall`(): Unit = runBlocking {
-        var antallGangerKallt = 0
-        val mockEngine = MockEngine {
-            antallGangerKallt++
-
-            respond(
-                content = ByteReadChannel(
-                    """
-                    {
-                        "token_type":"Bearer",
-                        "access_token":"XYZ",
-                        "expires_in": 3599
-                    }
-                    """.trimIndent(),
-                ),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
-            )
-        }
-
-        val httpClient = HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                jackson { applicationConfig() }
+    @Nested
+    inner class GetMachineToMachineTokenWithoutType {
+        @Test
+        fun `getMachineToMachineTokenWithoutType skal kaste feil hvis respons har feilkode`() {
+            runFailureTest { adTokenClient ->
+                adTokenClient.getMachineToMachineTokenWithoutType(FAKE_SCOPE)
             }
         }
 
-        val azureAdTokenClient = AzureAdTokenClient(
-            azureAdTokenUrl = "https://fake-url.com/token",
-            clientId = "fake-client-id",
-            clientSecret = "fake-client-secret",
-            httpClient = httpClient,
-        )
+        @Test
+        fun `getMachineToMachineTokenWithoutType skal returnere token hvis respons er OK`() {
+            runHappyPathTest(
+                FAKE_TOKEN,
+            ) { adTokenClient ->
+                adTokenClient.getMachineToMachineTokenWithoutType(FAKE_SCOPE)
+            }
+        }
 
-        val token1 = azureAdTokenClient.getMachineToMachineToken("fake-scope")
-        val token2 = azureAdTokenClient.getMachineToMachineToken("fake-scope")
+        @Test
+        fun `getMachineToMachineTokenWithoutType skal token fra cache`(): Unit = runBlocking {
+            val countingCache = CountingCache<String, AzureAdToken>()
 
-        token1 shouldBe "Bearer XYZ"
-        token2 shouldBe "Bearer XYZ"
+            val client = createAzureAdTokenClient(
+                statusCode = HttpStatusCode.OK,
+                cache = countingCache,
+            )
 
-        antallGangerKallt shouldBe 1
+            client.getMachineToMachineTokenWithoutType(FAKE_SCOPE)
+            client.getMachineToMachineTokenWithoutType(FAKE_SCOPE)
+
+            countingCache.putCount shouldBe 1
+        }
+    }
+
+    companion object {
+        private const val AZURE_AD_TOKEN_URL = "https://fake-url.com/token"
+        private const val FAKE_SCOPE = "fake-scope"
+        private const val FAKE_TOKEN = "XYZ"
+
+        private val responseBodyInTest =
+            """
+            {
+                "token_type":"Bearer",
+                "access_token":"XYZ",
+                "expires_in": 3599
+            }
+            """.trimIndent()
+
+        private fun runFailureTest(block: suspend (AzureAdTokenClient) -> Unit) {
+            val thrown = runBlocking {
+                shouldThrow<RuntimeException> {
+                    block(createAzureAdTokenClient(HttpStatusCode.Unauthorized))
+                }
+            }
+            thrown.message shouldStartWith "Kunne ikke hente AAD-token"
+        }
+
+        private fun runHappyPathTest(expectedResponse: String, block: suspend (AzureAdTokenClient) -> String) = runBlocking {
+            val azureAdTokenClient = createAzureAdTokenClient(HttpStatusCode.OK)
+            block(azureAdTokenClient) shouldBe expectedResponse
+        }
+
+        private fun createAzureAdTokenClient(statusCode: HttpStatusCode = HttpStatusCode.OK, cache: Cache<String, AzureAdToken>? = null) =
+            if (cache == null) {
+                AzureAdTokenClient(
+                    azureAdTokenUrl = AZURE_AD_TOKEN_URL,
+                    clientId = "fake-client-id",
+                    clientSecret = "fake-client-secret",
+                    httpClient = createMockHttpClient(AZURE_AD_TOKEN_URL, responseBodyInTest, statusCode),
+                )
+            } else {
+                AzureAdTokenClient(
+                    azureAdTokenUrl = AZURE_AD_TOKEN_URL,
+                    clientId = "fake-client-id",
+                    clientSecret = "fake-client-secret",
+                    httpClient = createMockHttpClient(AZURE_AD_TOKEN_URL, responseBodyInTest, statusCode),
+                    tokenCache = cache,
+                )
+            }
     }
 }
