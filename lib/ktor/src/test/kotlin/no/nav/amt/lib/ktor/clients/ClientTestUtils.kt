@@ -11,10 +11,21 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.jackson.jackson
 import io.ktor.utils.io.ByteReadChannel
+import no.nav.amt.lib.ktor.auth.exceptions.AuthenticationException
+import no.nav.amt.lib.ktor.auth.exceptions.AuthorizationException
 import no.nav.amt.lib.utils.applicationConfig
 import no.nav.amt.lib.utils.objectMapper
 
 object ClientTestUtils {
+    @JvmStatic
+    fun failureCases() = listOf(
+        Pair(HttpStatusCode.Unauthorized, AuthenticationException::class),
+        Pair(HttpStatusCode.Forbidden, AuthorizationException::class),
+        Pair(HttpStatusCode.BadRequest, IllegalArgumentException::class),
+        Pair(HttpStatusCode.NotFound, NoSuchElementException::class),
+        Pair(HttpStatusCode.InternalServerError, IllegalStateException::class),
+    )
+
     fun <T> createMockHttpClient(
         expectedUrl: String,
         responseBody: T?,
