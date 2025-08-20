@@ -11,12 +11,12 @@ data class Tiltakstype(
     val innsatsgrupper: Set<Innsatsgruppe>,
     val innhold: DeltakerRegistreringInnhold?,
 ) {
-    val visningsnavn get() = if(navn == "Jobbklubb"){
+    val visningsnavn get() = if (navn == "Jobbklubb") {
         "Jobbsøkerkurs"
     } else {
         navn
     }
-    
+
     enum class ArenaKode {
         ARBFORB,
         ARBRRHDAG,
@@ -70,13 +70,3 @@ data class Tiltakstype(
 
     val harDeltakelsesmengde = tiltakskode in setOf(Tiltakskode.ARBEIDSFORBEREDENDE_TRENING, Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET)
 }
-
-data class DeltakerRegistreringInnhold(
-    val innholdselementer: List<Innholdselement>,
-    val ledetekst: String,
-)
-
-data class Innholdselement(
-    val tekst: String,
-    val innholdskode: String,
-)
