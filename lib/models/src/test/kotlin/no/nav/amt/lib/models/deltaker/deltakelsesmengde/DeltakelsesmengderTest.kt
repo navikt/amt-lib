@@ -18,7 +18,7 @@ class DeltakelsesmengderTest {
         deltakelsesmengder[0].deltakelsesprosent shouldBe vedtak.deltakerVedVedtak.deltakelsesprosent
         deltakelsesmengder[0].dagerPerUke shouldBe vedtak.deltakerVedVedtak.dagerPerUke
         deltakelsesmengder[0].gyldigFra shouldBe vedtak.fattet!!.toLocalDate()
-        deltakelsesmengder[0].opprettet shouldBe vedtak.fattet!!
+        deltakelsesmengder[0].opprettet shouldBe vedtak.fattet
     }
 
     @Test
