@@ -78,7 +78,7 @@ class ManagedKafkaConsumer<K, V>(
         if (status.isFailure) {
             log.info(
                 "Consumer status for topic $topic is failure, " +
-                        "delaying ${status.backoffDuration}ms before retrying",
+                    "delaying ${status.backoffDuration}ms before retrying",
             )
             delay(status.backoffDuration)
         }
@@ -102,7 +102,7 @@ class ManagedKafkaConsumer<K, V>(
                 status.success()
             }
         } catch (t: Throwable) {
-            log.error(t.message, t)
+            log.error("Error while polling Kafka records: ${t.message}", t)
             status.failure()
         } finally {
             commitOffsets(consumer)
@@ -141,17 +141,17 @@ class ManagedKafkaConsumer<K, V>(
             consume(record.key(), record.value())
             log.info(
                 "Consumed record for " +
-                        "topic=${record.topic()} " +
-                        "key=${record.key()} " +
-                        "partition=${record.partition()} " +
-                        "offset=${record.offset()}",
-            )
-        } catch (t: Throwable) {
-            val msg = "Failed to consume record for " +
                     "topic=${record.topic()} " +
                     "key=${record.key()} " +
                     "partition=${record.partition()} " +
-                    "offset=${record.offset()}"
+                    "offset=${record.offset()}",
+            )
+        } catch (t: Throwable) {
+            val msg = "Failed to consume record for " +
+                "topic=${record.topic()} " +
+                "key=${record.key()} " +
+                "partition=${record.partition()} " +
+                "offset=${record.offset()}"
             throw ConsumerProcessingException(msg, t)
         }
     }
