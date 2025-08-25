@@ -1,6 +1,5 @@
 package no.nav.amt.lib.models.deltaker
 
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -17,15 +16,4 @@ data class Vedtak(
     val sistEndret: LocalDateTime,
     val sistEndretAv: UUID,
     val sistEndretAvEnhet: UUID,
-)
-
-data class DeltakerVedVedtak(
-    val id: UUID,
-    val startdato: LocalDate?,
-    val sluttdato: LocalDate?,
-    val dagerPerUke: Float?,
-    val deltakelsesprosent: Float?,
-    val bakgrunnsinformasjon: String?,
-    val deltakelsesinnhold: Deltakelsesinnhold?,
-    val status: DeltakerStatus,
 )
