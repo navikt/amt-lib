@@ -1,146 +1,206 @@
 package no.nav.amt.lib.ktor.clients
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.HttpStatusCode
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import no.nav.amt.lib.ktor.clients.ClientTestUtils.createMockHttpClient
+import no.nav.amt.lib.models.person.NavAnsatt
+import no.nav.amt.lib.models.person.NavBruker
+import no.nav.amt.lib.models.person.NavEnhet
 import no.nav.amt.lib.models.person.dto.NavBrukerFodselsarDto
 import no.nav.amt.lib.testing.testdata.person.PersonDtoTestsData.brukerDtoInTest
 import no.nav.amt.lib.testing.testdata.person.PersonDtoTestsData.enhetDtoInTest
 import no.nav.amt.lib.testing.testdata.person.PersonModelsTestData.ansattInTest
 import no.nav.amt.lib.testing.testdata.person.PersonModelsTestData.enhetInTest
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import java.time.Year
+import kotlin.reflect.KClass
 
 class AmtPersonServiceClientTest {
     @Nested
     inner class HentNavAnsattByNavIdent {
         val expectedUrl = "$PERSON_SVC_BASE_URL/api/nav-ansatt"
+        val expectedErrorMessage = "Kunne ikke hente nav-ansatt med ident ${ansattInTest.navIdent} fra amt-person-service."
+        val hentNavAnsattLambda: suspend (AmtPersonServiceClient) -> NavAnsatt =
+            { client -> client.hentNavAnsatt(ansattInTest.navIdent) }
 
-        @Test
-        fun `skal kaste feil hvis respons har feilkode`() {
-            runFailureTest(expectedUrl, "Kunne ikke hente NAV-ansatt fra amt-person-service") { personServiceClient ->
-                personServiceClient.hentNavAnsatt(ansattInTest.navIdent)
-            }
+        @ParameterizedTest
+        @MethodSource("no.nav.amt.lib.ktor.clients.ClientTestUtils#failureCases")
+        fun `skal kaste riktig exception ved feilrespons`(testCase: Pair<HttpStatusCode, KClass<out Throwable>>) {
+            val (statusCode, expectedExceptionType) = testCase
+            runFailureTest(
+                exceptionType = expectedExceptionType,
+                statusCode = statusCode,
+                expectedUrl = expectedUrl,
+                expectedError = expectedErrorMessage,
+                block = hentNavAnsattLambda,
+            )
         }
 
         @Test
         fun `skal returnere NavAnsatt`() {
-            runHappyPathTest(expectedUrl, ansattInTest) { personServiceClient ->
-                personServiceClient.hentNavAnsatt(ansattInTest.navIdent)
-            }
+            runHappyPathTest(
+                expectedUrl = expectedUrl,
+                expectedResponse = ansattInTest,
+                block = hentNavAnsattLambda,
+            )
         }
     }
 
     @Nested
     inner class HentNavAnsattById {
         val expectedUrl = "$PERSON_SVC_BASE_URL/api/nav-ansatt/${ansattInTest.id}"
+        val expectedErrorMessage = "Kunne ikke hente nav-ansatt med id ${ansattInTest.id} fra amt-person-service."
+        val hentNavAnsattLambda: suspend (AmtPersonServiceClient) -> NavAnsatt =
+            { client -> client.hentNavAnsatt(ansattInTest.id) }
 
-        @Test
-        fun `skal kaste feil hvis respons har feilkode`() {
-            runFailureTest(expectedUrl, "Kunne ikke hente NAV-ansatt fra amt-person-service") { personServiceClient ->
-                personServiceClient.hentNavAnsatt(ansattInTest.id)
-            }
+        @ParameterizedTest
+        @MethodSource("no.nav.amt.lib.ktor.clients.ClientTestUtils#failureCases")
+        fun `skal kaste riktig exception ved feilrespons`(testCase: Pair<HttpStatusCode, KClass<out Throwable>>) {
+            val (statusCode, expectedExceptionType) = testCase
+            runFailureTest(
+                exceptionType = expectedExceptionType,
+                statusCode = statusCode,
+                expectedUrl = expectedUrl,
+                expectedError = expectedErrorMessage,
+                block = hentNavAnsattLambda,
+            )
         }
 
         @Test
         fun `skal returnere NavAnsatt`() {
-            runHappyPathTest(expectedUrl, ansattInTest) { personServiceClient ->
-                personServiceClient.hentNavAnsatt(ansattInTest.id)
-            }
+            runHappyPathTest(expectedUrl = expectedUrl, expectedResponse = ansattInTest, block = hentNavAnsattLambda)
         }
     }
 
     @Nested
     inner class HentNavEnhetByNavEnhetsnummer {
         val expectedUrl = "$PERSON_SVC_BASE_URL/api/nav-enhet"
+        val expectedErrorMessage = "Kunne ikke hente nav-enhet med nummer ${enhetInTest.enhetsnummer} fra amt-person-service."
+        val hentNavEnhetLambda: suspend (AmtPersonServiceClient) -> NavEnhet =
+            { client -> client.hentNavEnhet(enhetInTest.enhetsnummer) }
 
-        @Test
-        fun `skal kaste feil hvis respons har feilkode`() {
-            runFailureTest(expectedUrl, "Kunne ikke hente NAV-enhet fra amt-person-service") { personServiceClient ->
-                personServiceClient.hentNavEnhet(enhetInTest.enhetsnummer)
-            }
+        @ParameterizedTest
+        @MethodSource("no.nav.amt.lib.ktor.clients.ClientTestUtils#failureCases")
+        fun `skal kaste riktig exception ved feilrespons`(testCase: Pair<HttpStatusCode, KClass<out Throwable>>) {
+            val (statusCode, expectedExceptionType) = testCase
+            runFailureTest(
+                exceptionType = expectedExceptionType,
+                statusCode = statusCode,
+                expectedUrl = expectedUrl,
+                expectedError = expectedErrorMessage,
+                block = hentNavEnhetLambda,
+            )
         }
 
         @Test
         fun `skal returnere NavEnhet`() {
-            val expected = enhetDtoInTest.toModel()
-
-            runHappyPathTest(expectedUrl, expected, enhetDtoInTest) { personServiceClient ->
-                personServiceClient.hentNavEnhet(expected.enhetsnummer)
-            }
+            runHappyPathTest(
+                expectedUrl = expectedUrl,
+                expectedResponse = enhetDtoInTest.toModel(),
+                responseBody = enhetDtoInTest,
+                block = hentNavEnhetLambda,
+            )
         }
     }
 
     @Nested
     inner class HentNavEnhetById {
-        val expected = enhetDtoInTest.toModel()
-        val expectedUrl = "$PERSON_SVC_BASE_URL/api/nav-enhet/${expected.id}"
+        val expectedUrl = "$PERSON_SVC_BASE_URL/api/nav-enhet/${enhetDtoInTest.id}"
+        val expectedErrorMessage = "Kunne ikke hente nav-enhet med id ${enhetDtoInTest.id} fra amt-person-service."
+        val hentNavEnhetLambda: suspend (AmtPersonServiceClient) -> NavEnhet =
+            { client -> client.hentNavEnhet(enhetDtoInTest.id) }
 
-        @Test
-        fun `skal kaste feil hvis respons har feilkode`() {
-            runFailureTest(expectedUrl, "Kunne ikke hente NAV-enhet fra amt-person-service") { personServiceClient ->
-                personServiceClient.hentNavEnhet(expected.id)
-            }
+        @ParameterizedTest
+        @MethodSource("no.nav.amt.lib.ktor.clients.ClientTestUtils#failureCases")
+        fun `skal kaste riktig exception ved feilrespons`(testCase: Pair<HttpStatusCode, KClass<out Throwable>>) {
+            val (statusCode, expectedExceptionType) = testCase
+            runFailureTest(
+                exceptionType = expectedExceptionType,
+                statusCode = statusCode,
+                expectedUrl = expectedUrl,
+                expectedError = expectedErrorMessage,
+                block = hentNavEnhetLambda,
+            )
         }
 
         @Test
         fun `skal returnere NavEnhet`() {
-            runHappyPathTest(expectedUrl, expected, enhetDtoInTest) { personServiceClient ->
-                personServiceClient.hentNavEnhet(expected.id)
-            }
+            runHappyPathTest(
+                expectedUrl = expectedUrl,
+                expectedResponse = enhetDtoInTest.toModel(),
+                responseBody = enhetDtoInTest,
+                block = hentNavEnhetLambda,
+            )
         }
     }
 
     @Nested
     inner class HentNavBruker {
         val expectedUrl = "$PERSON_SVC_BASE_URL/api/nav-bruker"
+        val expectedErrorMessage = "Kunne ikke hente nav-bruker fra amt-person-service"
+        val hentNavBrukerLambda: suspend (AmtPersonServiceClient) -> NavBruker =
+            { client -> client.hentNavBruker(brukerDtoInTest.personident) }
 
-        @Test
-        fun `skal kaste feil hvis respons har feilkode`() {
-            runFailureTest(expectedUrl, "Kunne ikke hente nav-bruker fra amt-person-service") { personServiceClient ->
-                personServiceClient.hentNavBruker("~personident~")
-            }
+        @ParameterizedTest
+        @MethodSource("no.nav.amt.lib.ktor.clients.ClientTestUtils#failureCases")
+        fun `skal kaste riktig exception ved feilrespons`(testCase: Pair<HttpStatusCode, KClass<out Throwable>>) {
+            val (statusCode, expectedExceptionType) = testCase
+            runFailureTest(
+                exceptionType = expectedExceptionType,
+                statusCode = statusCode,
+                expectedUrl = expectedUrl,
+                expectedError = expectedErrorMessage,
+                block = hentNavBrukerLambda,
+            )
         }
 
         @Test
         fun `skal returnere NavBruker`() {
-            val expectedBruker = brukerDtoInTest.toModel()
-
-            runHappyPathTest(expectedUrl, expectedBruker, brukerDtoInTest) { personServiceClient ->
-                personServiceClient.hentNavBruker("~personident~")
-            }
+            runHappyPathTest(
+                expectedUrl = expectedUrl,
+                expectedResponse = brukerDtoInTest.toModel(),
+                responseBody = brukerDtoInTest,
+                block = hentNavBrukerLambda,
+            )
         }
     }
 
     @Nested
     inner class HentNavBrukerFodselsar {
         val expectedUrl = "${PERSON_SVC_BASE_URL}/api/nav-bruker-fodselsar"
+        val expectedErrorMessage = "Kunne ikke hente fodselsar for nav-bruker fra amt-person-service"
+        val hentNavBrukerFodselsarLambda: suspend (AmtPersonServiceClient) -> Int =
+            { client -> client.hentNavBrukerFodselsar(brukerDtoInTest.personident) }
 
-        @Test
-        fun `skal kaste feil hvis respons har feilkode`() {
+        @ParameterizedTest
+        @MethodSource("no.nav.amt.lib.ktor.clients.ClientTestUtils#failureCases")
+        fun `skal kaste riktig exception ved feilrespons`(testCase: Pair<HttpStatusCode, KClass<out Throwable>>) {
+            val (statusCode, expectedExceptionType) = testCase
             runFailureTest(
-                expectedUrl,
-                "Kunne ikke hente fodselsar for nav-bruker fra amt-person-service",
-            ) { personServiceClient ->
-                personServiceClient.hentNavBrukerFodselsar("~personident~")
-            }
+                exceptionType = expectedExceptionType,
+                statusCode = statusCode,
+                expectedUrl = expectedUrl,
+                expectedError = expectedErrorMessage,
+                block = hentNavBrukerFodselsarLambda,
+            )
         }
 
         @Test
         fun `skal returnere fodselsar`() {
             val brukerFodselsarDto = NavBrukerFodselsarDto(Year.now().value - 20)
             runHappyPathTest(
-                expectedUrl,
-                brukerFodselsarDto.fodselsar,
-                brukerFodselsarDto,
-            ) { personServiceClient ->
-                personServiceClient.hentNavBrukerFodselsar("~personident~")
-            }
+                expectedUrl = expectedUrl,
+                expectedResponse = brukerFodselsarDto.fodselsar,
+                responseBody = brukerFodselsarDto,
+                block = hentNavBrukerFodselsarLambda,
+            )
         }
     }
 
@@ -148,13 +208,15 @@ class AmtPersonServiceClientTest {
         private const val PERSON_SVC_BASE_URL = "http://amt-person-svc"
 
         private fun runFailureTest(
+            exceptionType: KClass<out Throwable>,
+            statusCode: HttpStatusCode,
             expectedUrl: String,
             expectedError: String,
-            block: suspend (AmtPersonServiceClient) -> Unit,
+            block: suspend (AmtPersonServiceClient) -> Any,
         ) {
-            val thrown = runBlocking {
-                shouldThrow<RuntimeException> {
-                    block(createPersonServiceClient(expectedUrl, HttpStatusCode.Unauthorized))
+            val thrown = assertThrows(exceptionType.java) {
+                runBlocking {
+                    block(createPersonServiceClient(expectedUrl, statusCode))
                 }
             }
             thrown.message shouldStartWith expectedError
