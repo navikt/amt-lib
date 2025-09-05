@@ -41,9 +41,7 @@ publishing {
 
 sourceSets {
     main {
-        resources {
-            setSrcDirs(setOf(file("src/main/resource"), file("../../shared-resources")))
-        }
+        resources.srcDir("src/main/resource")
     }
 }
 
