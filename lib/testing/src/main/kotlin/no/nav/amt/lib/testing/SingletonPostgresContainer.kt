@@ -24,7 +24,7 @@ object SingletonPostgresContainer {
     private val reuseConfig = ContainerReuseConfig()
 
     fun start() {
-        start("postgres:14-alpine")
+        start("postgres:17-alpine")
     }
 
     internal fun startWithImage(version: String) {
