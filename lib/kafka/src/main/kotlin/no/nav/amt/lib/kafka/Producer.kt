@@ -8,20 +8,25 @@ import java.time.Duration
 
 class Producer<K, V>(
     kafkaConfig: KafkaConfig,
-    gracePeriodMillis: Long = 1000
+    gracePeriodMillis: Long = 1000,
+    addShutdownHook: Boolean = true,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val producer = KafkaProducer<K, V>(kafkaConfig.producerConfig())
 
     init {
-        Runtime.getRuntime().addShutdownHook(
-            Thread {
-                log.info("Shutting down Kafka producer in $gracePeriodMillis milliseconds...")
-                Thread.sleep(Duration.ofMillis(gracePeriodMillis))
-                producer.close()
-            },
-        )
+        if (addShutdownHook) {
+            Runtime.getRuntime().addShutdownHook(
+                Thread {
+                    log.info("Shutting down Kafka producer in $gracePeriodMillis milliseconds...")
+                    Thread.sleep(Duration.ofMillis(gracePeriodMillis))
+                    producer.close()
+                },
+            )
+        }
     }
+
+    fun close() = producer.close()
 
     fun produce(
         topic: String,
