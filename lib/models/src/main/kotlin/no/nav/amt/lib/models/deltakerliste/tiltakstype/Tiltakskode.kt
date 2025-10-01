@@ -15,6 +15,8 @@ enum class Tiltakskode {
     FAG_OG_YRKESOPPLAERING,
     ;
 
+    fun erEnkeltplass() = this in setOf(HOYERE_UTDANNING, AMO, FAG_OG_YRKESOPPLAERING)
+
     fun toArenaKode() = when (this) {
         ARBEIDSFORBEREDENDE_TRENING -> ArenaKode.ARBFORB
         ARBEIDSRETTET_REHABILITERING -> ArenaKode.ARBRRHDAG
