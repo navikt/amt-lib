@@ -27,6 +27,9 @@ data class Tiltakstype(
         GRUPPEAMO,
         JOBBK,
         VASV,
+        ENKELAMO,
+        ENKFAGYRKE,
+        HOYEREUTD
     }
 
     enum class Tiltakskode {
@@ -39,6 +42,9 @@ data class Tiltakstype(
         JOBBKLUBB,
         OPPFOLGING,
         VARIG_TILRETTELAGT_ARBEID_SKJERMET,
+        HOYERE_UTDANNING,
+        AMO,
+        FAG_OG_YRKESOPPLAERING,
         ;
 
         @Deprecated("Utrygg sjekk av kurstiltak. Må erstattes med å sjekke oppstartstype på tiltak")
@@ -54,6 +60,9 @@ data class Tiltakstype(
             JOBBKLUBB -> ArenaKode.JOBBK
             OPPFOLGING -> ArenaKode.INDOPPFAG
             VARIG_TILRETTELAGT_ARBEID_SKJERMET -> ArenaKode.VASV
+            AMO -> ArenaKode.ENKELAMO
+            FAG_OG_YRKESOPPLAERING -> ArenaKode.ENKFAGYRKE
+            HOYERE_UTDANNING -> ArenaKode.HOYEREUTD
         }
     }
 
@@ -63,10 +72,17 @@ data class Tiltakstype(
             Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
             Tiltakskode.JOBBKLUBB,
         )
+        val enkeltplassTiltak = setOf(
+            Tiltakskode.HOYERE_UTDANNING,
+            Tiltakskode.AMO,
+            Tiltakskode.FAG_OG_YRKESOPPLAERING
+        )
     }
 
     @Deprecated("Utrygg sjekk av kurstiltak. Må erstattes med å sjekke oppstartstype på tiltak")
     fun erKurs() = this.tiltakskode.erKurs()
+
+    fun erEnkeltplass() = this.tiltakskode in enkeltplassTiltak
 
     val harDeltakelsesmengde = tiltakskode in setOf(Tiltakskode.ARBEIDSFORBEREDENDE_TRENING, Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET)
 }
