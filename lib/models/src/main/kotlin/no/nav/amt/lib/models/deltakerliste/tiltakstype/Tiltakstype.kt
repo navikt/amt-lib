@@ -17,56 +17,23 @@ data class Tiltakstype(
         navn
     }
 
-    enum class ArenaKode {
-        ARBFORB,
-        ARBRRHDAG,
-        AVKLARAG,
-        DIGIOPPARB,
-        INDOPPFAG,
-        GRUFAGYRKE,
-        GRUPPEAMO,
-        JOBBK,
-        VASV,
-    }
-
-    enum class Tiltakskode {
-        ARBEIDSFORBEREDENDE_TRENING,
-        ARBEIDSRETTET_REHABILITERING,
-        AVKLARING,
-        DIGITALT_OPPFOLGINGSTILTAK,
-        GRUPPE_ARBEIDSMARKEDSOPPLAERING,
-        GRUPPE_FAG_OG_YRKESOPPLAERING,
-        JOBBKLUBB,
-        OPPFOLGING,
-        VARIG_TILRETTELAGT_ARBEID_SKJERMET,
-        ;
-
-        @Deprecated("Utrygg sjekk av kurstiltak. Må erstattes med å sjekke oppstartstype på tiltak")
-        fun erKurs() = this in kursTiltak
-
-        fun toArenaKode() = when (this) {
-            ARBEIDSFORBEREDENDE_TRENING -> ArenaKode.ARBFORB
-            ARBEIDSRETTET_REHABILITERING -> ArenaKode.ARBRRHDAG
-            AVKLARING -> ArenaKode.AVKLARAG
-            DIGITALT_OPPFOLGINGSTILTAK -> ArenaKode.DIGIOPPARB
-            GRUPPE_ARBEIDSMARKEDSOPPLAERING -> ArenaKode.GRUPPEAMO
-            GRUPPE_FAG_OG_YRKESOPPLAERING -> ArenaKode.GRUFAGYRKE
-            JOBBKLUBB -> ArenaKode.JOBBK
-            OPPFOLGING -> ArenaKode.INDOPPFAG
-            VARIG_TILRETTELAGT_ARBEID_SKJERMET -> ArenaKode.VASV
-        }
-    }
-
     companion object {
         val kursTiltak = setOf(
             Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
             Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
             Tiltakskode.JOBBKLUBB,
         )
+        val enkeltplassTiltak = setOf(
+            Tiltakskode.HOYERE_UTDANNING,
+            Tiltakskode.AMO,
+            Tiltakskode.FAG_OG_YRKESOPPLAERING
+        )
     }
 
     @Deprecated("Utrygg sjekk av kurstiltak. Må erstattes med å sjekke oppstartstype på tiltak")
-    fun erKurs() = this.tiltakskode.erKurs()
+    fun erKurs() = this.tiltakskode in kursTiltak
+
+    fun erEnkeltplass() = this.tiltakskode in enkeltplassTiltak
 
     val harDeltakelsesmengde = tiltakskode in setOf(Tiltakskode.ARBEIDSFORBEREDENDE_TRENING, Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET)
 }

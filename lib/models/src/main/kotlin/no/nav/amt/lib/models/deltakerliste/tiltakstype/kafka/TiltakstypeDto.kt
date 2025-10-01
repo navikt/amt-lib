@@ -2,14 +2,16 @@ package no.nav.amt.lib.models.deltakerliste.tiltakstype.kafka
 
 import no.nav.amt.lib.models.deltaker.InnsatsgruppeV2
 import no.nav.amt.lib.models.deltaker.toV1
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.DeltakerRegistreringInnhold
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
 import java.util.UUID
 
 data class TiltakstypeDto(
     val id: UUID,
     val navn: String,
-    val tiltakskode: Tiltakstype.Tiltakskode,
+    val tiltakskode: Tiltakskode,
     val arenaKode: String?,
     val innsatsgrupper: Set<InnsatsgruppeV2>,
     val deltakerRegistreringInnhold: DeltakerRegistreringInnhold?,
@@ -18,7 +20,7 @@ data class TiltakstypeDto(
         id = id,
         navn = navn,
         tiltakskode = tiltakskode,
-        arenaKode = arenaKode?.let { Tiltakstype.ArenaKode.valueOf(arenaKode) } ?: tiltakskode.toArenaKode(),
+        arenaKode = arenaKode?.let { ArenaKode.valueOf(arenaKode) } ?: tiltakskode.toArenaKode(),
         innsatsgrupper = innsatsgrupper.map { it.toV1() }.toSet(),
         innhold = deltakerRegistreringInnhold,
     )

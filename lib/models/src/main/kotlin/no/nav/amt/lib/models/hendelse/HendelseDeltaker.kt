@@ -1,6 +1,7 @@
 package no.nav.amt.lib.models.hendelse
 
-import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakstype
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.ArenaKode
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.time.LocalDate
 import java.util.UUID
 
@@ -29,9 +30,9 @@ data class HendelseDeltaker(
 
         data class Tiltak(
             val navn: String,
-            val type: Tiltakstype.ArenaKode,
+            val type: ArenaKode,
             val ledetekst: String?,
-            val tiltakskode: Tiltakstype.Tiltakskode,
+            val tiltakskode: Tiltakskode,
         )
 
         enum class Oppstartstype {
