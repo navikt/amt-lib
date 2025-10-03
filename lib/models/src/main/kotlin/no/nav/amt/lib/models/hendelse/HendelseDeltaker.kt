@@ -12,6 +12,7 @@ data class HendelseDeltaker(
     val forsteVedtakFattet: LocalDate?,
     val opprettetDato: LocalDate?,
 ) {
+    @Deprecated("Bruk Deltakerliste")
     data class Deltakerliste(
         val id: UUID,
         val navn: String,
@@ -27,17 +28,17 @@ data class HendelseDeltaker(
             val navn: String,
             val overordnetArrangor: Arrangor?,
         )
-
         data class Tiltak(
             val navn: String,
             val type: ArenaKode,
             val ledetekst: String?,
             val tiltakskode: Tiltakskode,
         )
-
         enum class Oppstartstype {
             LOPENDE,
             FELLES,
         }
     }
 }
+
+
