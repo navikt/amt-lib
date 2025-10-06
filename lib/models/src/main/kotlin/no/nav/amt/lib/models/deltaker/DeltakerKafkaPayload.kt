@@ -10,7 +10,7 @@ import java.util.UUID
 /*
     Deltaker core modell som brukes til deltaker-v2
  */
-data class Deltaker(
+data class DeltakerKafkaPayload(
     val id: UUID,
     val deltakerliste: Deltakerliste,
     val personalia: Personalia,
@@ -27,7 +27,7 @@ data class Deltaker(
     val historikk: List<DeltakerHistorikk>?,
     val vurderingerFraArrangor: List<Vurdering>?,
     val erManueltDeltMedArrangor: Boolean = false,
-    val sisteEndring: SisteEndring,
+    val sisteEndring: SisteEndring?,
 
     /*
         Felter som bør deprecates og flyttes inn i relevante strukturer:
@@ -48,9 +48,11 @@ data class Deltaker(
     val sistEndretAv: UUID?,
     // @Deprecated("Bruk sisteEndring.enhet")
     val sistEndretAvEnhet: UUID?,
+    val forcedUpdate: Boolean? = false,
 )
 
-data class DeltakerStatusDto( //Kan ikke bytte til DeltakerStatus siden denne har en annen struktur på aarsak
+data class DeltakerStatusDto(
+    //Kan ikke bytte til DeltakerStatus siden denne har en annen struktur på aarsak
     val id: UUID?,
     val type: DeltakerStatus.Type,
     val aarsak: DeltakerStatus.Aarsak.Type?,
@@ -60,7 +62,7 @@ data class DeltakerStatusDto( //Kan ikke bytte til DeltakerStatus siden denne ha
 )
 
 data class SisteEndring(
-    val utfortAv: NavAnsatt,
-    val enhet: String,
+    val utfortAvNavAnsattId: UUID,
+    val navEnhetId: UUID?,
     val timestamp: LocalDateTime,
 )

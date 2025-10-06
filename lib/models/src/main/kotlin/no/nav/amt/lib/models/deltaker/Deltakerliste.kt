@@ -8,7 +8,6 @@ import java.util.UUID
 data class Deltakerliste(
     val id: UUID,
     val navn: String,
-    val arrangor: Arrangor,
     val tiltak: Tiltak,
     val startdato: LocalDate? = null,
     val sluttdato: LocalDate? = null,
