@@ -25,8 +25,8 @@ data class Tiltakstype(
         )
         val enkeltplassTiltak = setOf(
             Tiltakskode.HOYERE_UTDANNING,
-            Tiltakskode.AMO,
-            Tiltakskode.FAG_OG_YRKESOPPLAERING
+            Tiltakskode.ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING,
+            Tiltakskode.ENKELTPLASS_FAG_OG_YRKESOPPLAERING
         )
     }
 
