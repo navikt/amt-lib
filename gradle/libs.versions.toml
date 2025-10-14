@@ -16,7 +16,7 @@ kotlin-version = "2.2.20"
 jackson-version = "2.20.0"
 prometheus-version = "1.4.1"
 ktlint-plugin-version = "13.1.0"
-ktor-version = "3.3.0"
+ktor-version = "3.3.1"
 caffeine-version = "3.2.2"
 mockk-version = "1.14.6"
 
