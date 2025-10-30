@@ -12,15 +12,14 @@ data class HendelseDeltaker(
     val forsteVedtakFattet: LocalDate?,
     val opprettetDato: LocalDate?,
 ) {
-    @Deprecated("Bruk Deltakerliste")
     data class Deltakerliste(
         val id: UUID,
         val navn: String,
         val arrangor: Arrangor,
         val tiltak: Tiltak,
-        val startdato: LocalDate? = null, //Må være nullable fordi de benyttes som dbo i amt-distribusjon
+        val startdato: LocalDate? = null, // Må være nullable fordi de benyttes som dbo i amt-distribusjon
         val sluttdato: LocalDate? = null,
-        val oppstartstype: Oppstartstype? = null, //Må være nullable fordi de benyttes som dbo i amt-distribusjon
+        val oppstartstype: Oppstartstype? = null, // Må være nullable fordi de benyttes som dbo i amt-distribusjon
     ) {
         data class Arrangor(
             val id: UUID,
@@ -28,17 +27,17 @@ data class HendelseDeltaker(
             val navn: String,
             val overordnetArrangor: Arrangor?,
         )
+
         data class Tiltak(
             val navn: String,
             val type: ArenaKode,
             val ledetekst: String?,
             val tiltakskode: Tiltakskode,
         )
+
         enum class Oppstartstype {
             LOPENDE,
             FELLES,
         }
     }
 }
-
-
