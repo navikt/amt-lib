@@ -29,10 +29,10 @@ object Database {
             }
             maximumPoolSize = 10
             minimumIdle = 1
-            idleTimeout = 10001
-            connectionTimeout = 1000
+            idleTimeout = 10_001
+            connectionTimeout = 1_000
             maxLifetime = 1001
-            leakDetectionThreshold = 2001
+            leakDetectionThreshold = 10_000
         }
 
         runMigration()
