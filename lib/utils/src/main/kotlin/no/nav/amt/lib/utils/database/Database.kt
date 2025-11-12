@@ -27,8 +27,12 @@ object Database {
                 addDataSourceProperty("user", config.dbUsername)
                 addDataSourceProperty("password", config.dbPassword)
             }
+            maximumPoolSize = 10
             minimumIdle = 1
-            leakDetectionThreshold = 10_000
+            idleTimeout = 10001
+            connectionTimeout = 1000
+            maxLifetime = 1001
+            leakDetectionThreshold = 2001
         }
 
         runMigration()
