@@ -80,6 +80,7 @@ data class Forslag(
         val aarsak: EndringAarsak?,
         val harDeltatt: Boolean?,
         val harFullfort: Boolean?,
+        val sluttdato: LocalDate? = null,
     ) : Endring
 
     data class IkkeAktuell(

@@ -83,6 +83,7 @@ data class DeltakerEndring(
         data class EndreAvslutning(
             val aarsak: Aarsak?,
             val harFullfort: Boolean,
+            val sluttdato: LocalDate? = null,
             val begrunnelse: String?,
         ) : Endring()
 
