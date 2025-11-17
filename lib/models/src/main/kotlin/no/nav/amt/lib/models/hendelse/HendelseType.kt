@@ -113,6 +113,7 @@ sealed interface HendelseType {
     data class EndreAvslutning(
         val aarsak: Aarsak?,
         val harFullfort: Boolean,
+        val sluttdato: LocalDate?,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
         override val endringFraForslag: Forslag.Endring?,
@@ -181,6 +182,7 @@ fun DeltakerEndring.toHendelseEndring(utkast: UtkastDto? = null) = when (val end
     is DeltakerEndring.Endring.EndreAvslutning -> HendelseType.EndreAvslutning(
         aarsak = endring.aarsak,
         harFullfort = endring.harFullfort,
+        sluttdato = endring.sluttdato,
         begrunnelseFraNav = endring.begrunnelse,
         begrunnelseFraArrangor = forslag?.begrunnelse,
         endringFraForslag = forslag?.endring,
