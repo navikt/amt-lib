@@ -112,7 +112,7 @@ sealed interface HendelseType {
 
     data class EndreAvslutning(
         val aarsak: Aarsak?,
-        val harFullfort: Boolean,
+        val harFullfort: Boolean?,
         val sluttdato: LocalDate?,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
