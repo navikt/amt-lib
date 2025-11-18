@@ -11,5 +11,5 @@ data class EndreAvslutningRequest(
     val aarsak: DeltakerEndring.Aarsak?,
     val begrunnelse: String?,
     val sluttdato: LocalDate?,
-    val harFullfort: Boolean,
+    val harFullfort: Boolean?,
 ) : EndringForslagRequest
