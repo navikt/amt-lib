@@ -7,7 +7,6 @@ data class Tiltakstype(
     val id: UUID,
     val navn: String,
     val tiltakskode: Tiltakskode,
-    val arenaKode: ArenaKode,
     val innsatsgrupper: Set<Innsatsgruppe>,
     val innhold: DeltakerRegistreringInnhold?,
 ) {
@@ -26,7 +25,7 @@ data class Tiltakstype(
         val enkeltplassTiltak = setOf(
             Tiltakskode.HOYERE_UTDANNING,
             Tiltakskode.ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING,
-            Tiltakskode.ENKELTPLASS_FAG_OG_YRKESOPPLAERING
+            Tiltakskode.ENKELTPLASS_FAG_OG_YRKESOPPLAERING,
         )
     }
 
