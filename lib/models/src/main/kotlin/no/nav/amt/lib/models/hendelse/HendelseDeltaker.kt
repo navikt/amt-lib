@@ -19,6 +19,7 @@ data class HendelseDeltaker(
         val startdato: LocalDate? = null, // Må være nullable fordi de benyttes som dbo i amt-distribusjon
         val sluttdato: LocalDate? = null,
         val oppstartstype: Oppstartstype? = null, // Må være nullable fordi de benyttes som dbo i amt-distribusjon
+        val oppmoteSted: String? = null,
     ) {
         data class Arrangor(
             val id: UUID,
