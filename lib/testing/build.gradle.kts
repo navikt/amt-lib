@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+    implementation("org.lz4:lz4-java:1.8.1") // fjernes ved neste release av org.apache.kafka:kafka-clients
     implementation(project(":lib:models"))
     implementation(project(":lib:utils"))
 
