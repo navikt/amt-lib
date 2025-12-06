@@ -3,16 +3,6 @@ plugins {
     id("amt-lib.conventions")
 }
 
-// fjernes ved neste release av org.apache.kafka:kafka-clients
-configurations.configureEach {
-    resolutionStrategy {
-        capabilitiesResolution {
-                select(candidates.first { (it.id as ModuleComponentIdentifier).group == "at.yawk.lz4" })
-            }
-        }
-    }
-}
-
 dependencies {
     implementation("org.lz4:lz4-java:1.8.1") // fjernes ved neste release av org.apache.kafka:kafka-clients
     api(libs.kafka.clients)
