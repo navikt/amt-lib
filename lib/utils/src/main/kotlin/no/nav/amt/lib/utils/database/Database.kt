@@ -57,6 +57,7 @@ object Database {
      * @return Resultatet fra blokken
      * @throws IllegalStateException hvis funksjonen kalles mens en annen transaksjon er aktiv
      */
+    @Deprecated("Bruk kotliquery.transaction fordi denne metoden krever spesielt oppsett av HikariDataSource")
     suspend fun <A> transaction(block: suspend () -> A): A {
         check(transactionalSession == null) { "Nested transactions are not supported" }
 
