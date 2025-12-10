@@ -27,11 +27,7 @@ object Database {
                 addDataSourceProperty("user", config.dbUsername)
                 addDataSourceProperty("password", config.dbPassword)
             }
-            maximumPoolSize = 10
             minimumIdle = 1
-            idleTimeout = 10_001
-            connectionTimeout = 1_000
-            maxLifetime = 1001
             leakDetectionThreshold = 10_000
         }
 
