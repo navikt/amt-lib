@@ -15,7 +15,7 @@ object Database {
     private val transactionalSessionThreadLocal = ThreadLocal<TransactionalSession?>()
     internal val transactionalSession get() = transactionalSessionThreadLocal.get()
 
-    fun init(config: DatabaseConfig) {
+    fun init(config: DatabaseConfig, useHikariSettingsForLegacyTransactions: Boolean = false) {
         dataSource = HikariDataSource().apply {
             if (config.jdbcURL.isNotEmpty()) {
                 jdbcUrl = config.jdbcURL
@@ -27,8 +27,17 @@ object Database {
                 addDataSourceProperty("user", config.dbUsername)
                 addDataSourceProperty("password", config.dbPassword)
             }
+
             minimumIdle = 1
             leakDetectionThreshold = 10_000
+
+            // for bruk med transaction under som er deprikert
+            if (useHikariSettingsForLegacyTransactions) {
+                maximumPoolSize = 10
+                idleTimeout = 10_001
+                connectionTimeout = 1_000
+                maxLifetime = 1001
+            }
         }
 
         runMigration()
