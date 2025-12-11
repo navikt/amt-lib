@@ -7,7 +7,7 @@ kotest-version = "6.0.7"
 kafka-clients-version = "4.1.1"
 kotlinx-version = "1.10.2"
 logback-version = "1.5.21"
-testcontainers-version = "1.21.3"
+testcontainers-version = "2.0.2"
 flyway-version = "11.18.0"
 hikari-version = "7.0.2"
 kotliquery-version = "1.9.1"
@@ -30,9 +30,8 @@ kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafk
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-version" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-version" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback-version" }
-testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers-version" }
-testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers-version" }
-testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers-version" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers-version" }
+testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka", version.ref = "testcontainers-version" }
 hikari-cp = { module = "com.zaxxer:HikariCP", version.ref = "hikari-version" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway-version" }
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway-version" }
