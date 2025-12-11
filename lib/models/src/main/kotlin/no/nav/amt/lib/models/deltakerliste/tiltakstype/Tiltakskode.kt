@@ -22,4 +22,21 @@ enum class Tiltakskode {
 
     // Ved lansering av ny forskrift/påmelding av nye typer må vi bruke type feltet GRUPPE/ENKELPLASS istedet for tiltakskode
     fun erEnkeltplass() = this in setOf(HOYERE_UTDANNING, ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING, ENKELTPLASS_FAG_OG_YRKESOPPLAERING)
+
+    @Deprecated("Denne skal antakelig erstattes av lokalt tilpassede versjoner")
+    fun toArenaKode() = when (this) {
+        ARBEIDSFORBEREDENDE_TRENING -> ArenaKode.ARBFORB
+        ARBEIDSRETTET_REHABILITERING -> ArenaKode.ARBRRHDAG
+        AVKLARING -> ArenaKode.AVKLARAG
+        DIGITALT_OPPFOLGINGSTILTAK -> ArenaKode.DIGIOPPARB
+        GRUPPE_ARBEIDSMARKEDSOPPLAERING -> ArenaKode.GRUPPEAMO
+        GRUPPE_FAG_OG_YRKESOPPLAERING -> ArenaKode.GRUFAGYRKE
+        JOBBKLUBB -> ArenaKode.JOBBK
+        OPPFOLGING -> ArenaKode.INDOPPFAG
+        VARIG_TILRETTELAGT_ARBEID_SKJERMET -> ArenaKode.VASV
+        ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING -> ArenaKode.ENKELAMO
+        ENKELTPLASS_FAG_OG_YRKESOPPLAERING -> ArenaKode.ENKFAGYRKE
+        HOYERE_UTDANNING -> ArenaKode.HOYEREUTD
+        else -> throw IllegalArgumentException("Ukjent tiltakskode: $this")
+    }
 }
