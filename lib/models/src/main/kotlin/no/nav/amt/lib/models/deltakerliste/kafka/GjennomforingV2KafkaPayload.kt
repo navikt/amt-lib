@@ -1,10 +1,22 @@
 package no.nav.amt.lib.models.deltakerliste.kafka
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.EXISTING_PROPERTY,
+    property = "type",
+    visible = true,
+)
+@JsonSubTypes(
+    JsonSubTypes.Type(value = GjennomforingV2KafkaPayload.Gruppe::class, name = "Gruppe"),
+    JsonSubTypes.Type(value = GjennomforingV2KafkaPayload.Enkeltplass::class, name = "Enkeltplass"),
+)
 sealed class GjennomforingV2KafkaPayload {
     abstract val id: UUID
     abstract val type: Type
@@ -50,7 +62,9 @@ sealed class GjennomforingV2KafkaPayload {
         override val type: Type = Type.Enkeltplass,
     ) : GjennomforingV2KafkaPayload()
 
-    enum class GjennomforingStatusType(val beskrivelse: String) {
+    enum class GjennomforingStatusType(
+        val beskrivelse: String,
+    ) {
         GJENNOMFORES("Gjennomføres"),
         AVSLUTTET("Avsluttet"),
         AVBRUTT("Avbrutt"),

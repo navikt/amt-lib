@@ -5,10 +5,10 @@ plugins {
 
 dependencies {
     implementation(libs.jackson.jsr310)
-    implementation(libs.kafka.clients)
     implementation(libs.jackson.kotlin)
 
     testImplementation(project(":lib:testing"))
+    testImplementation(project(":lib:utils"))
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.junit.jupiter.engine)
     testImplementation(libs.junit.jupiter.params)

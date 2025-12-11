@@ -1,17 +1,16 @@
 package no.nav.amt.lib.models.deltakerliste.kafka
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
+import no.nav.amt.lib.utils.objectMapper
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
 class GjennomforingV2KafkaPayloadDeserializingTest {
-
-    private val deserializer = GjennomforingV2KafkaPayloadDeserializer()
-
     @Test
     fun `deserializes Gruppe payload`() {
         val id = UUID.randomUUID()
@@ -20,17 +19,18 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
         val startDato = LocalDate.parse("2024-02-01")
         val sluttDato = LocalDate.parse("2024-03-01")
 
-        val json = """
+        val json =
+            """
             {
               "type": "Gruppe",
-              "id": "${id}",
-              "opprettetTidspunkt": "${opprettet}",
-              "oppdatertTidspunkt": "${oppdatert}",
+              "id": "$id",
+              "opprettetTidspunkt": "$opprettet",
+              "oppdatertTidspunkt": "$oppdatert",
               "tiltakskode": "ARBEIDSFORBEREDENDE_TRENING",
               "arrangor": { "organisasjonsnummer": "123456789" },
               "navn": "Gruppe 1",
-              "startDato": "${startDato}",
-              "sluttDato": "${sluttDato}",
+              "startDato": "$startDato",
+              "sluttDato": "$sluttDato",
               "status": "GJENNOMFORES",
               "oppstart": "LOPENDE",
               "tilgjengeligForArrangorFraOgMedDato": null,
@@ -39,9 +39,9 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
               "deltidsprosent": 50.0,
               "oppmoteSted": "Oslo"
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        val payload = deserializer.deserialize("topic", json.toByteArray())
+        val payload = objectMapper.readValue<GjennomforingV2KafkaPayload>(json)
 
         payload.shouldBeInstanceOf<GjennomforingV2KafkaPayload.Gruppe>()
         payload.id shouldBe id
@@ -68,18 +68,19 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
         val opprettet = Instant.parse("2023-11-10T09:08:07Z")
         val oppdatert = Instant.parse("2024-01-12T11:10:09Z")
 
-        val json = """
+        val json =
+            """
             {
               "type": "Enkeltplass",
-              "id": "${id}",
-              "opprettetTidspunkt": "${opprettet}",
-              "oppdatertTidspunkt": "${oppdatert}",
+              "id": "$id",
+              "opprettetTidspunkt": "$opprettet",
+              "oppdatertTidspunkt": "$oppdatert",
               "tiltakskode": "ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING",
               "arrangor": { "organisasjonsnummer": "987654321" }
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        val payload = deserializer.deserialize("topic", json.toByteArray())
+        val payload = objectMapper.readValue<GjennomforingV2KafkaPayload>(json)
 
         payload.shouldBeInstanceOf<GjennomforingV2KafkaPayload.Enkeltplass>()
         payload.id shouldBe id
