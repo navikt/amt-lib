@@ -1,4 +1,4 @@
-package no.nav.amt.lib.models.deltakerliste.tiltakstype.kafka
+package no.nav.amt.lib.models.deltakerliste.kafka
 
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.time.Instant
@@ -7,13 +7,13 @@ import java.util.UUID
 
 sealed class GjennomforingV2KafkaPayload {
     abstract val id: UUID
-    abstract val type: GjennomforingType
+    abstract val type: Type
     abstract val opprettetTidspunkt: Instant
     abstract val oppdatertTidspunkt: Instant
     abstract val tiltakskode: Tiltakskode
     abstract val arrangor: Arrangor
 
-    enum class GjennomforingType {
+    enum class Type {
         Gruppe,
         Enkeltplass,
     }
@@ -38,7 +38,7 @@ sealed class GjennomforingV2KafkaPayload {
         val antallPlasser: Int,
         val deltidsprosent: Double,
         val oppmoteSted: String?,
-        override val type: GjennomforingType = GjennomforingType.Gruppe,
+        override val type: Type = Type.Gruppe,
     ) : GjennomforingV2KafkaPayload()
 
     data class Enkeltplass(
@@ -47,7 +47,7 @@ sealed class GjennomforingV2KafkaPayload {
         override val oppdatertTidspunkt: Instant,
         override val tiltakskode: Tiltakskode,
         override val arrangor: Arrangor,
-        override val type: GjennomforingType = GjennomforingType.Enkeltplass,
+        override val type: Type = Type.Enkeltplass,
     ) : GjennomforingV2KafkaPayload()
 
     enum class GjennomforingStatusType(val beskrivelse: String) {
