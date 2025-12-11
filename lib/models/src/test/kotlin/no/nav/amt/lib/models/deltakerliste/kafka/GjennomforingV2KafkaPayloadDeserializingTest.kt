@@ -3,27 +3,25 @@ package no.nav.amt.lib.models.deltakerliste.kafka
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import no.nav.amt.lib.models.deltakerliste.GjennomforingStatusType
+import no.nav.amt.lib.models.deltakerliste.GjennomforingType
+import no.nav.amt.lib.models.deltakerliste.Oppstartstype
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import no.nav.amt.lib.utils.objectMapper
 import org.junit.jupiter.api.Test
-import java.time.Instant
 import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.Year
 import java.util.UUID
 
 class GjennomforingV2KafkaPayloadDeserializingTest {
     @Test
     fun `deserializes Gruppe payload`() {
-        val id = UUID.randomUUID()
-        val opprettet = Instant.parse("2024-01-02T03:04:05Z")
-        val oppdatert = Instant.parse("2024-05-06T07:08:09Z")
-        val startDato = LocalDate.parse("2024-02-01")
-        val sluttDato = LocalDate.parse("2024-03-01")
-
         val json =
             """
             {
-              "type": "Gruppe",
-              "id": "$id",
+              "type": "TiltaksgjennomforingV2.Gruppe",
+              "id": "$idInTest",
               "opprettetTidspunkt": "$opprettet",
               "oppdatertTidspunkt": "$oppdatert",
               "tiltakskode": "ARBEIDSFORBEREDENDE_TRENING",
@@ -44,35 +42,31 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
         val payload = objectMapper.readValue<GjennomforingV2KafkaPayload>(json)
 
         payload.shouldBeInstanceOf<GjennomforingV2KafkaPayload.Gruppe>()
-        payload.id shouldBe id
-        payload.opprettetTidspunkt shouldBe opprettet
-        payload.oppdatertTidspunkt shouldBe oppdatert
+        payload.id shouldBe idInTest
+        payload.opprettetTidspunkt shouldBe OffsetDateTime.parse(opprettet)
+        payload.oppdatertTidspunkt shouldBe OffsetDateTime.parse(oppdatert)
         payload.tiltakskode shouldBe Tiltakskode.ARBEIDSFORBEREDENDE_TRENING
         payload.arrangor.organisasjonsnummer shouldBe "123456789"
         payload.navn shouldBe "Gruppe 1"
         payload.startDato shouldBe startDato
         payload.sluttDato shouldBe sluttDato
-        payload.status shouldBe GjennomforingV2KafkaPayload.GjennomforingStatusType.GJENNOMFORES
-        payload.oppstart shouldBe GjennomforingV2KafkaPayload.GjennomforingOppstartstype.LOPENDE
+        payload.status shouldBe GjennomforingStatusType.GJENNOMFORES
+        payload.oppstart shouldBe Oppstartstype.LOPENDE
         payload.tilgjengeligForArrangorFraOgMedDato shouldBe null
         payload.apentForPamelding shouldBe true
         payload.antallPlasser shouldBe 25
         payload.deltidsprosent shouldBe 50.0
         payload.oppmoteSted shouldBe "Oslo"
-        payload.type shouldBe GjennomforingV2KafkaPayload.Type.Gruppe
+        payload.type shouldBe GjennomforingType.Gruppe
     }
 
     @Test
     fun `deserializes Enkeltplass payload`() {
-        val id = UUID.randomUUID()
-        val opprettet = Instant.parse("2023-11-10T09:08:07Z")
-        val oppdatert = Instant.parse("2024-01-12T11:10:09Z")
-
         val json =
             """
             {
-              "type": "Enkeltplass",
-              "id": "$id",
+              "type": "TiltaksgjennomforingV2.Enkeltplass",
+              "id": "$idInTest",
               "opprettetTidspunkt": "$opprettet",
               "oppdatertTidspunkt": "$oppdatert",
               "tiltakskode": "ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING",
@@ -83,11 +77,21 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
         val payload = objectMapper.readValue<GjennomforingV2KafkaPayload>(json)
 
         payload.shouldBeInstanceOf<GjennomforingV2KafkaPayload.Enkeltplass>()
-        payload.id shouldBe id
-        payload.opprettetTidspunkt shouldBe opprettet
-        payload.oppdatertTidspunkt shouldBe oppdatert
+        payload.id shouldBe idInTest
+        payload.opprettetTidspunkt shouldBe OffsetDateTime.parse(opprettet)
+        payload.oppdatertTidspunkt shouldBe OffsetDateTime.parse(oppdatert)
         payload.tiltakskode shouldBe Tiltakskode.ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING
         payload.arrangor.organisasjonsnummer shouldBe "987654321"
-        payload.type shouldBe GjennomforingV2KafkaPayload.Type.Enkeltplass
+        payload.type shouldBe GjennomforingType.Enkeltplass
+    }
+
+    companion object {
+        private val idInTest: UUID = UUID.randomUUID()
+
+        private val opprettet = "${Year.now()}-01-02T03:04:05Z"
+        private val oppdatert = "${Year.now()}-05-06T07:08:09Z"
+
+        private val startDato: LocalDate = LocalDate.of(Year.now().value, 2, 1)
+        private val sluttDato: LocalDate = LocalDate.of(Year.now().value, 3, 1)
     }
 }
