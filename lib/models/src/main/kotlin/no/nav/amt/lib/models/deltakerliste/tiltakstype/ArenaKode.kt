@@ -10,6 +10,8 @@ import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.HOYERE_UTDANN
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.JOBBKLUBB
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.OPPFOLGING
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.ENKELTPLASS_FAG_OG_YRKESOPPLAERING
 
 enum class ArenaKode {
     ARBFORB,
@@ -35,8 +37,8 @@ enum class ArenaKode {
         JOBBK -> JOBBKLUBB
         INDOPPFAG -> OPPFOLGING
         VASV -> VARIG_TILRETTELAGT_ARBEID_SKJERMET
-        ENKELAMO -> Tiltakskode.ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING
-        ENKFAGYRKE -> Tiltakskode.ENKELTPLASS_FAG_OG_YRKESOPPLAERING
+        ENKELAMO -> ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING
+        ENKFAGYRKE -> ENKELTPLASS_FAG_OG_YRKESOPPLAERING
         HOYEREUTD -> HOYERE_UTDANNING
     }
 }
