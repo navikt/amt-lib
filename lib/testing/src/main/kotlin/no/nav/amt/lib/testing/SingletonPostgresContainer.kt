@@ -5,9 +5,9 @@ import no.nav.amt.lib.testing.utils.ContainerReuseConfig
 import no.nav.amt.lib.utils.database.Database
 import no.nav.amt.lib.utils.database.DatabaseConfig
 import org.slf4j.LoggerFactory
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.containers.PostgreSQLContainer.POSTGRESQL_PORT
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
+import org.testcontainers.postgresql.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer.POSTGRESQL_PORT
 import org.testcontainers.utility.DockerImageName
 
 object SingletonPostgres16Container {
@@ -19,7 +19,7 @@ object SingletonPostgres16Container {
 object SingletonPostgresContainer {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    private var postgresContainer: PostgreSQLContainer<Nothing>? = null
+    private var postgresContainer: PostgreSQLContainer? = null
 
     private val reuseConfig = ContainerReuseConfig()
 
@@ -49,7 +49,7 @@ object SingletonPostgresContainer {
         }
     }
 
-    private fun configureEnv(container: PostgreSQLContainer<Nothing>) {
+    private fun configureEnv(container: PostgreSQLContainer) {
         System.setProperty(DatabaseConfig.DB_HOST_KEY, container.host)
         System.setProperty(DatabaseConfig.DB_PORT_KEY, container.getMappedPort(POSTGRESQL_PORT).toString())
         System.setProperty(DatabaseConfig.DB_DATABASE_KEY, container.databaseName)
@@ -63,8 +63,8 @@ object SingletonPostgresContainer {
         System.setProperty(DatabaseConfig.JDBC_URL_KEY, jdbcURL)
     }
 
-    private fun createContainer(image: String): PostgreSQLContainer<Nothing> {
-        val container = PostgreSQLContainer<Nothing>(
+    private fun createContainer(image: String): PostgreSQLContainer {
+        val container = PostgreSQLContainer(
             DockerImageName.parse(image).asCompatibleSubstituteFor("postgres"),
         )
         container.addEnv("TZ", "Europe/Oslo")

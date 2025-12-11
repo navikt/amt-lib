@@ -13,7 +13,6 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.kotest.assertions.core)
     implementation(libs.kotest.assertions.json)
-    implementation(libs.testcontainers)
     implementation(libs.testcontainers.kafka)
     implementation(libs.testcontainers.postgresql)
     implementation(libs.hikari.cp)
