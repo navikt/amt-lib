@@ -1,8 +1,5 @@
 package no.nav.amt.lib.models.deltakerliste.tiltakstype
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-
-@JsonDeserialize(using = TiltakskodeDeserializer::class)
 enum class Tiltakskode {
     ARBEIDSFORBEREDENDE_TRENING,
     ARBEIDSRETTET_REHABILITERING,
