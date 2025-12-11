@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     implementation(libs.jackson.jsr310)
-    implementation(libs.jackson.kotlin)
 
     testImplementation(project(":lib:testing"))
     testImplementation(project(":lib:utils"))
@@ -14,4 +13,5 @@ dependencies {
     testImplementation(libs.junit.jupiter.params)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.assertions.json)
+    testImplementation(libs.jackson.kotlin)
 }
