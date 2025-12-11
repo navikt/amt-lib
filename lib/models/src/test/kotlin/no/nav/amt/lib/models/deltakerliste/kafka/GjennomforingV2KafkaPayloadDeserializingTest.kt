@@ -16,30 +16,15 @@ import java.util.UUID
 
 class GjennomforingV2KafkaPayloadDeserializingTest {
     @Test
-    fun `deserializes Gruppe payload`() {
-        val json =
-            """
-            {
-              "type": "TiltaksgjennomforingV2.Gruppe",
-              "id": "$idInTest",
-              "opprettetTidspunkt": "$opprettet",
-              "oppdatertTidspunkt": "$oppdatert",
-              "tiltakskode": "ARBEIDSFORBEREDENDE_TRENING",
-              "arrangor": { "organisasjonsnummer": "123456789" },
-              "navn": "Gruppe 1",
-              "startDato": "$startDato",
-              "sluttDato": "$sluttDato",
-              "status": "GJENNOMFORES",
-              "oppstart": "LOPENDE",
-              "tilgjengeligForArrangorFraOgMedDato": null,
-              "apentForPamelding": true,
-              "antallPlasser": 25,
-              "deltidsprosent": 50.0,
-              "oppmoteSted": "Oslo"
-            }
-            """.trimIndent()
+    fun `inneholder type ved serialisering`() {
+        val payload = objectMapper.readValue<GjennomforingV2KafkaPayload>(gruppeJson)
+        val serialized = objectMapper.writeValueAsString(payload)
+        objectMapper.readTree(serialized) shouldBe objectMapper.readTree(gruppeJson)
+    }
 
-        val payload = objectMapper.readValue<GjennomforingV2KafkaPayload>(json)
+    @Test
+    fun `deserializes Gruppe payload`() {
+        val payload = objectMapper.readValue<GjennomforingV2KafkaPayload>(gruppeJson)
 
         payload.shouldBeInstanceOf<GjennomforingV2KafkaPayload.Gruppe>()
         payload.id shouldBe idInTest
@@ -57,7 +42,7 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
         payload.antallPlasser shouldBe 25
         payload.deltidsprosent shouldBe 50.0
         payload.oppmoteSted shouldBe "Oslo"
-        payload.type shouldBe GjennomforingType.Gruppe
+        payload.gjennomforingType shouldBe GjennomforingType.Gruppe
     }
 
     @Test
@@ -82,7 +67,7 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
         payload.oppdatertTidspunkt shouldBe OffsetDateTime.parse(oppdatert)
         payload.tiltakskode shouldBe Tiltakskode.ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING
         payload.arrangor.organisasjonsnummer shouldBe "987654321"
-        payload.type shouldBe GjennomforingType.Enkeltplass
+        payload.gjennomforingType shouldBe GjennomforingType.Enkeltplass
     }
 
     companion object {
@@ -93,5 +78,27 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
 
         private val startDato: LocalDate = LocalDate.of(Year.now().value, 2, 1)
         private val sluttDato: LocalDate = LocalDate.of(Year.now().value, 3, 1)
+
+        private val gruppeJson =
+            """
+            {
+              "type": "TiltaksgjennomforingV2.Gruppe",
+              "id": "$idInTest",
+              "opprettetTidspunkt": "$opprettet",
+              "oppdatertTidspunkt": "$oppdatert",
+              "tiltakskode": "ARBEIDSFORBEREDENDE_TRENING",
+              "arrangor": { "organisasjonsnummer": "123456789" },
+              "navn": "Gruppe 1",
+              "startDato": "$startDato",
+              "sluttDato": "$sluttDato",
+              "status": "GJENNOMFORES",
+              "oppstart": "LOPENDE",
+              "tilgjengeligForArrangorFraOgMedDato": null,
+              "apentForPamelding": true,
+              "antallPlasser": 25,
+              "deltidsprosent": 50.0,
+              "oppmoteSted": "Oslo"
+            }
+            """.trimIndent()
     }
 }

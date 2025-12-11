@@ -1,5 +1,6 @@
 package no.nav.amt.lib.models.deltakerliste.kafka
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import no.nav.amt.lib.models.deltakerliste.GjennomforingStatusType
@@ -14,9 +15,8 @@ import java.util.UUID
 
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.EXISTING_PROPERTY,
+    include = JsonTypeInfo.As.PROPERTY,
     property = "type",
-    visible = false,
 )
 @JsonSubTypes(
     JsonSubTypes.Type(value = GjennomforingV2KafkaPayload.Gruppe::class, name = GRUPPE_V2_TYPE),
@@ -24,11 +24,13 @@ import java.util.UUID
 )
 sealed class GjennomforingV2KafkaPayload {
     abstract val id: UUID
-    abstract val type: GjennomforingType
     abstract val opprettetTidspunkt: OffsetDateTime
     abstract val oppdatertTidspunkt: OffsetDateTime
     abstract val tiltakskode: Tiltakskode
     abstract val arrangor: Arrangor
+
+    @get:JsonIgnore
+    abstract val gjennomforingType: GjennomforingType
 
     data class Arrangor(
         val organisasjonsnummer: String,
@@ -50,7 +52,7 @@ sealed class GjennomforingV2KafkaPayload {
         val antallPlasser: Int,
         val deltidsprosent: Double,
         val oppmoteSted: String?,
-        override val type: GjennomforingType = GjennomforingType.Gruppe,
+        override val gjennomforingType: GjennomforingType = GjennomforingType.Gruppe,
     ) : GjennomforingV2KafkaPayload()
 
     data class Enkeltplass(
@@ -59,7 +61,7 @@ sealed class GjennomforingV2KafkaPayload {
         override val oppdatertTidspunkt: OffsetDateTime,
         override val tiltakskode: Tiltakskode,
         override val arrangor: Arrangor,
-        override val type: GjennomforingType = GjennomforingType.Enkeltplass,
+        override val gjennomforingType: GjennomforingType = GjennomforingType.Enkeltplass,
     ) : GjennomforingV2KafkaPayload()
 
     fun <T : Any> toModel(gruppeMapper: (Gruppe) -> T, enkeltplassMapper: (Enkeltplass) -> T): T = when (this) {
