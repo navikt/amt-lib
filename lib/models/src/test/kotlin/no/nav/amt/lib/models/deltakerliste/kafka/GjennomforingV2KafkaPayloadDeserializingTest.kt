@@ -38,7 +38,6 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
         payload.status shouldBe GjennomforingStatusType.GJENNOMFORES
         payload.oppstart shouldBe Oppstartstype.LOPENDE
         payload.tilgjengeligForArrangorFraOgMedDato shouldBe null
-        payload.apentForPamelding shouldBe true
         payload.antallPlasser shouldBe 25
         payload.deltidsprosent shouldBe 50.0
         payload.oppmoteSted shouldBe "Oslo"
@@ -94,7 +93,6 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
               "status": "GJENNOMFORES",
               "oppstart": "LOPENDE",
               "tilgjengeligForArrangorFraOgMedDato": null,
-              "apentForPamelding": true,
               "antallPlasser": 25,
               "deltidsprosent": 50.0,
               "oppmoteSted": "Oslo"
