@@ -48,6 +48,7 @@ sealed class GjennomforingV2KafkaPayload {
         val status: GjennomforingStatusType,
         val oppstart: Oppstartstype,
         val tilgjengeligForArrangorFraOgMedDato: LocalDate?,
+        val apentForPamelding: Boolean,
         val antallPlasser: Int,
         val deltidsprosent: Double,
         val oppmoteSted: String?,
