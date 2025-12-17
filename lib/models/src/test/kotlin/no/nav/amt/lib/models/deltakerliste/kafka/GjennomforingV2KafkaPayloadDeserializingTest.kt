@@ -3,6 +3,7 @@ package no.nav.amt.lib.models.deltakerliste.kafka
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
 import no.nav.amt.lib.models.deltakerliste.GjennomforingStatusType
 import no.nav.amt.lib.models.deltakerliste.GjennomforingType
 import no.nav.amt.lib.models.deltakerliste.Oppstartstype
@@ -43,6 +44,7 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
         payload.deltidsprosent shouldBe 50.0
         payload.oppmoteSted shouldBe "Oslo"
         payload.gjennomforingType shouldBe GjennomforingType.Gruppe
+        payload.pameldingType shouldBe GjennomforingPameldingType.TRENGER_GODKJENNING
     }
 
     @Test
@@ -55,7 +57,8 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
               "opprettetTidspunkt": "$opprettet",
               "oppdatertTidspunkt": "$oppdatert",
               "tiltakskode": "ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING",
-              "arrangor": { "organisasjonsnummer": "987654321" }
+              "arrangor": { "organisasjonsnummer": "987654321" },
+              "pameldingType": "DIREKTE_VEDTAK"
             }
             """.trimIndent()
 
@@ -68,6 +71,7 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
         payload.tiltakskode shouldBe Tiltakskode.ENKELTPLASS_ARBEIDSMARKEDSOPPLAERING
         payload.arrangor.organisasjonsnummer shouldBe "987654321"
         payload.gjennomforingType shouldBe GjennomforingType.Enkeltplass
+        payload.pameldingType shouldBe GjennomforingPameldingType.DIREKTE_VEDTAK
     }
 
     companion object {
@@ -88,6 +92,7 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
               "oppdatertTidspunkt": "$oppdatert",
               "tiltakskode": "ARBEIDSFORBEREDENDE_TRENING",
               "arrangor": { "organisasjonsnummer": "123456789" },
+              "pameldingType": "TRENGER_GODKJENNING",
               "navn": "Gruppe 1",
               "startDato": "$startDato",
               "sluttDato": "$sluttDato",
