@@ -3,6 +3,7 @@ package no.nav.amt.lib.models.deltakerliste.kafka
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
 import no.nav.amt.lib.models.deltakerliste.GjennomforingStatusType
 import no.nav.amt.lib.models.deltakerliste.GjennomforingType
 import no.nav.amt.lib.models.deltakerliste.Oppstartstype
@@ -28,6 +29,7 @@ sealed class GjennomforingV2KafkaPayload {
     abstract val oppdatertTidspunkt: OffsetDateTime
     abstract val tiltakskode: Tiltakskode
     abstract val arrangor: Arrangor
+    abstract val pameldingType: GjennomforingPameldingType
 
     @get:JsonIgnore
     abstract val gjennomforingType: GjennomforingType
@@ -42,6 +44,7 @@ sealed class GjennomforingV2KafkaPayload {
         override val oppdatertTidspunkt: OffsetDateTime,
         override val tiltakskode: Tiltakskode,
         override val arrangor: Arrangor,
+        override val pameldingType: GjennomforingPameldingType,
         val navn: String,
         val startDato: LocalDate,
         val sluttDato: LocalDate?,
@@ -61,6 +64,7 @@ sealed class GjennomforingV2KafkaPayload {
         override val oppdatertTidspunkt: OffsetDateTime,
         override val tiltakskode: Tiltakskode,
         override val arrangor: Arrangor,
+        override val pameldingType: GjennomforingPameldingType,
         override val gjennomforingType: GjennomforingType = GjennomforingType.Enkeltplass,
     ) : GjennomforingV2KafkaPayload()
 
