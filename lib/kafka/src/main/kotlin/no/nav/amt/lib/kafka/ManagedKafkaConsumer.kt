@@ -1,174 +1,206 @@
 package no.nav.amt.lib.kafka
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
 import java.time.Duration
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * ManagedKafkaConsumer handles Kafka consumption with:
+ *  - per-partition retries
+ *  - offset tracking
+ *  - safe commit on shutdown or rebalance
+ *
+ * uncommittedOffsets tracks the highest successfully processed offset per partition.
+ * retryOffsets tracks the earliest offset that must be retried.
+ *
+ * A partition may temporarily exist in both maps if some records were processed
+ * successfully before a failure occurred.
+ */
 class ManagedKafkaConsumer<K, V>(
     private val topic: String,
-    private val config: Map<String, *>,
+    private val config: Map<String, Any>,
+    private val pollTimeoutMs: Long = 1000L,
     private val consume: suspend (key: K, value: V) -> Unit,
 ) : Consumer<K, V> {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val job = Job()
-    private val scope = CoroutineScope(Dispatchers.IO + job)
-    private val offsetsToCommit = mutableMapOf<TopicPartition, OffsetAndMetadata>()
 
-    private var running = false
+    // single-threaded KafkaConsumer dispatcher
+    private val dispatcher = Executors
+        .newSingleThreadExecutor { r -> Thread(r, "kafka-consumer-$topic") }
+        .asCoroutineDispatcher()
+    private val scope = CoroutineScope(dispatcher)
 
-    val status: ConsumerStatus = ConsumerStatus()
-    private lateinit var runState: Deferred<Unit>
+    private val running = AtomicBoolean(false)
+    private lateinit var consumer: KafkaConsumer<K, V>
+
+    // tracks offsets for successfully processed records, ready to commit
+    private val uncommittedOffsets = mutableMapOf<TopicPartition, OffsetAndMetadata>()
+
+    // tracks partitions that failed to process, to retry from a specific offset
+    private val retryOffsets = mutableMapOf<TopicPartition, Long>()
+
+    val status = ConsumerStatus()
 
     override fun start() {
-        log.info("Starting consumer for topic: $topic")
-        runState = run()
+        if (!running.compareAndSet(false, true)) {
+            log.warn("Consumer for $topic already started")
+            return
+        }
+
+        log.info("Starting Kafka consumer for topic $topic")
+
+        consumer = KafkaConsumer<K, V>(config).also { kafkaConsumer ->
+            kafkaConsumer.subscribe(listOf(topic), createRebalanceListener(kafkaConsumer))
+            scope.launch {
+                kafkaConsumer.use { runLoop(it) }
+            }
+        }
+    }
+
+    override suspend fun close() {
+        if (!running.compareAndSet(true, false)) return
+
+        log.info("Stopping Kafka consumer for topic $topic")
+
+        consumer.wakeup()
+        scope.coroutineContext[Job]?.cancelAndJoin()
+        dispatcher.close()
     }
 
     override suspend fun consume(key: K, value: V) = this.consume.invoke(key, value)
 
-    fun stop() {
-        running = false
-    }
-
-    override suspend fun close() {
-        log.info("Closing consumer for topic: $topic.. ..")
-        stop()
-        return runState.await().also {
-            log.info("Closed consumer for topic: $topic")
-        }
-    }
-
-    private fun run() = scope.async {
-        running = true
-
-        KafkaConsumer<K, V>(config).use { consumer ->
-            subscribe(consumer)
-        }
-    }
-
-    private suspend fun subscribe(consumer: KafkaConsumer<K, V>) {
+    private suspend fun runLoop(consumer: KafkaConsumer<K, V>) {
         try {
-            consumer.subscribe(listOf(topic), rebalanceListener(consumer))
-
-            while (running) {
-                poll(consumer)
-            }
+            while (running.get()) pollOnce(consumer)
         } catch (_: WakeupException) {
-            log.info("Consumer for $topic is exiting")
-            stop()
+            log.info("Consumer for $topic shutting down")
         } catch (t: Throwable) {
-            log.error("Something went wrong with consumer for topic $topic", t)
-            throw t
-        }
-    }
-
-    private suspend fun poll(consumer: KafkaConsumer<K, V>) {
-        if (status.isFailure) {
-            log.info(
-                "Consumer status for topic $topic is failure, " +
-                        "delaying ${status.backoffDuration}ms before retrying",
-            )
-            delay(status.backoffDuration)
-        }
-
-        try {
-            val records = consumer.poll(Duration.ofMillis(1000))
-
-            seekToEarliestOffsets(records, consumer)
-
-            if (!records.isEmpty) {
-                log.info("Consumer for $topic polled ${records.count()} records.")
-            }
-
-            records.forEach { record ->
-                process(record)
-
-                val partition = TopicPartition(record.topic(), record.partition())
-                val offset = OffsetAndMetadata(record.offset() + 1)
-
-                offsetsToCommit[partition] = offset
-                status.success()
-            }
-        } catch (t: Throwable) {
-            log.error(t.message, t)
-            status.failure()
+            log.error("Unexpected error in consumer loop for $topic", t)
         } finally {
             commitOffsets(consumer)
         }
     }
 
-    private fun commitOffsets(consumer: KafkaConsumer<K, V>) {
-        if (offsetsToCommit.isNotEmpty()) {
-            offsetsToCommit.forEach { (partition, offset) -> consumer.seek(partition, offset) }
-            consumer.commitSync(offsetsToCommit)
-
-            log.info("Committed offsets $offsetsToCommit")
-            offsetsToCommit.clear()
+    private suspend fun pollOnce(consumer: KafkaConsumer<K, V>) {
+        val delayMs = status.getDelayWhenAllPartitionsAreInRetry(consumer.assignment())
+        if (delayMs != null) {
+            log.debug("All assigned partitions are in retry, delaying $delayMs ms before next poll")
+            delay(delayMs)
+            return
         }
-    }
 
-    private fun seekToEarliestOffsets(records: ConsumerRecords<K, V>, consumer: KafkaConsumer<K, V>) {
-        val offsetMap = mutableMapOf<TopicPartition, OffsetAndMetadata>()
+        if (retryOffsets.isNotEmpty()) retryFailedPartitions(consumer)
 
-        records.forEach { record ->
-            val topicPartition = TopicPartition(record.topic(), record.partition())
-            val offsetAndMetadata = OffsetAndMetadata(record.offset())
+        val records = consumer.poll(Duration.ofMillis(pollTimeoutMs))
+        if (records.isEmpty) return
 
-            val storedOffset = offsetMap[topicPartition]
-
-            if (storedOffset == null || offsetAndMetadata.offset() < storedOffset.offset()) {
-                offsetMap[topicPartition] = offsetAndMetadata
+        records.partitions().forEach { tp ->
+            if (status.canProcessPartition(tp)) {
+                processPartition(tp, records.records(tp))
+            } else {
+                log.debug("Consumer status for {} is failure, delaying {} ms before retrying", tp, status.backoffDuration(tp))
             }
         }
 
-        offsetMap.forEach { consumer.seek(it.key, it.value) }
+        commitOffsets(consumer)
     }
 
-    private suspend fun process(record: ConsumerRecord<K, V>) {
+    private suspend fun processPartition(topicPartition: TopicPartition, records: List<ConsumerRecord<K, V>>) {
+        for (record in records) {
+            try {
+                consume(record.key(), record.value())
+
+                uncommittedOffsets[topicPartition] = OffsetAndMetadata(record.offset() + 1)
+                retryOffsets.remove(topicPartition)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                log.warn("Failed processing $topicPartition offset=${record.offset()}", t)
+
+                // set offset to retry from if not already set
+                retryOffsets[topicPartition] = retryOffsets[topicPartition]
+                    ?.coerceAtMost(record.offset())
+                    ?: record.offset()
+
+                status.incrementRetryCount(topicPartition)
+                break // stop on first failure in partition
+            }
+        }
+
+        if (topicPartition !in retryOffsets) {
+            status.resetRetryCount(topicPartition)
+        }
+    }
+
+    private fun retryFailedPartitions(consumer: KafkaConsumer<K, V>) {
+        retryOffsets.forEach { (tp, retryOffset) ->
+            try {
+                val currentOffset = consumer.position(tp)
+                if (currentOffset != retryOffset) {
+                    consumer.seek(tp, retryOffset)
+                    log.debug("Retrying {} from offset {} (was {})", tp, retryOffset, currentOffset)
+                }
+            } catch (e: IllegalStateException) {
+                log.warn("Partition $tp not assigned during retry seek", e)
+            }
+        }
+    }
+
+    private fun commitOffsets(consumer: KafkaConsumer<K, V>) {
+        if (uncommittedOffsets.isEmpty()) return
+
         try {
-            consume(record.key(), record.value())
-            log.info(
-                "Consumed record for " +
-                        "topic=${record.topic()} " +
-                        "key=${record.key()} " +
-                        "partition=${record.partition()} " +
-                        "offset=${record.offset()}",
-            )
-        } catch (t: Throwable) {
-            val msg = "Failed to consume record for " +
-                    "topic=${record.topic()} " +
-                    "key=${record.key()} " +
-                    "partition=${record.partition()} " +
-                    "offset=${record.offset()}"
-            throw ConsumerProcessingException(msg, t)
+            consumer.commitSync(uncommittedOffsets)
+            log.info("Offsets committed: $uncommittedOffsets")
+            uncommittedOffsets.clear()
+        } catch (e: Exception) {
+            log.error("Commit failed for offsets $uncommittedOffsets", e)
         }
     }
 
-    class ConsumerProcessingException(
-        msg: String,
-        cause: Throwable?,
-    ) : RuntimeException(msg, cause)
+    private fun createRebalanceListener(consumer: KafkaConsumer<K, V>) = object : ConsumerRebalanceListener {
+        override fun onPartitionsRevoked(revokedPartitions: Collection<TopicPartition>) {
+            log.info("Partitions revoked: $revokedPartitions")
 
-    private fun rebalanceListener(consumer: KafkaConsumer<K, V>) = object : ConsumerRebalanceListener {
-        override fun onPartitionsRevoked(partitions: MutableCollection<TopicPartition>) {
-            log.info("Partitions revoked $partitions, committing offsets")
-            commitOffsets(consumer)
+            // collect offsets for revoked partitions that are pending commit
+            val offsetsToCommitDuringRebalance = uncommittedOffsets
+                .filterKeys { it in revokedPartitions }
+
+            // try to commit offsets before losing ownership
+            try {
+                if (offsetsToCommitDuringRebalance.isNotEmpty()) {
+                    consumer.commitSync(offsetsToCommitDuringRebalance)
+                    log.info("Committed offsets before revoke: $offsetsToCommitDuringRebalance")
+                }
+            } catch (e: Exception) {
+                // log but continue; the new owner will retry from last committed offsets
+                log.error("Failed to commit offsets during partition revoke for $revokedPartitions: $offsetsToCommitDuringRebalance", e)
+            } finally {
+                // remove committed/uncommitted state for revoked partitions
+                revokedPartitions.forEach { tp ->
+                    uncommittedOffsets.remove(tp)
+                    retryOffsets.remove(tp) // always remove, even if the commit failed
+                    status.resetRetryCount(tp)
+                }
+            }
         }
 
-        override fun onPartitionsAssigned(partitions: MutableCollection<TopicPartition>) {
-            log.info("Partitions assigned $partitions")
+        override fun onPartitionsAssigned(partitions: Collection<TopicPartition>) {
+            log.info("Partitions assigned: $partitions")
         }
     }
 }

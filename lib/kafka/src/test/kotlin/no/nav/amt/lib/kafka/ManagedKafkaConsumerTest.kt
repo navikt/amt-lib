@@ -1,6 +1,7 @@
 package no.nav.amt.lib.kafka
 
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.runBlocking
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.testing.SingletonKafkaProvider
 import no.nav.amt.lib.testing.eventually
@@ -52,8 +53,9 @@ class ManagedKafkaConsumerTest {
 
         eventually {
             cache[key] shouldBe value
-            consumer.stop()
         }
+
+        runBlocking { consumer.close() }
     }
 
     @Test
@@ -79,30 +81,35 @@ class ManagedKafkaConsumerTest {
 
         eventually {
             cache[key] shouldBe value
-            consumer.stop()
         }
+
+        runBlocking { consumer.close() }
     }
 
     @Test
     fun `ManagedKafkaConsumer - prøver å konsumere melding på nytt hvis noe feiler`() {
-        val key = "key"
-        val value = "value"
+        produceStringString(ProducerRecord(topic, "~key1~", "~value~"))
+        produceStringString(ProducerRecord(topic, "~key2~", "~value~"))
 
-        var antallGangerKallt = 0
+        var numberOfInvocations = 0
+        val failOnceKeys = mutableSetOf("~key2~")
 
-        produceStringString(ProducerRecord(topic, key, value))
+        val consumer = ManagedKafkaConsumer<String, String>(topic, stringConsumerConfig) { key, _ ->
+            numberOfInvocations++
 
-        val consumer = ManagedKafkaConsumer<String, String>(topic, stringConsumerConfig) { _, _ ->
-            antallGangerKallt++
-            error("skal feile noen ganger")
+            if (key in failOnceKeys) {
+                failOnceKeys.remove(key)
+                error("Should retry")
+            }
         }
+
         consumer.start()
 
         eventually {
-            antallGangerKallt shouldBe 2
-            consumer.status.retries shouldBe antallGangerKallt
-            consumer.stop()
+            numberOfInvocations shouldBe 3
         }
+
+        runBlocking { consumer.close() }
     }
 
     @Test
@@ -126,6 +133,7 @@ class ManagedKafkaConsumerTest {
         }
 
         consumer.start()
+
         data.forEach {
             val partition = (0..3).random()
             produceIntInt(ProducerRecord(intTopic.name(), partition, it, it))
