@@ -1,16 +1,13 @@
 package no.nav.amt.lib.kafka
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
-import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
-import org.apache.kafka.clients.consumer.ConsumerRecord
+import no.nav.amt.lib.kafka.KafkaPartitionUtils.retryFailedPartitions
+import no.nav.amt.lib.kafka.KafkaPartitionUtils.updatePartitionPauseState
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.clients.consumer.OffsetAndMetadata
-import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
 import java.time.Duration
@@ -37,22 +34,18 @@ class ManagedKafkaConsumer<K, V>(
 ) : Consumer<K, V> {
     private val log = LoggerFactory.getLogger(javaClass)
 
+    private val running = AtomicBoolean(false)
+    private lateinit var consumer: KafkaConsumer<K, V>
+
+    private val partitionBackoffManager = PartitionBackoffManager()
+    private val offsetManager = OffsetManager()
+    private val partitionProcessor = PartitionProcessor(consume, partitionBackoffManager, offsetManager)
+
     // single-threaded KafkaConsumer dispatcher
     private val dispatcher = Executors
         .newSingleThreadExecutor { r -> Thread(r, "kafka-consumer-$topic") }
         .asCoroutineDispatcher()
     private val scope = CoroutineScope(dispatcher)
-
-    private val running = AtomicBoolean(false)
-    private lateinit var consumer: KafkaConsumer<K, V>
-
-    // tracks offsets for successfully processed records, ready to commit
-    private val uncommittedOffsets = mutableMapOf<TopicPartition, OffsetAndMetadata>()
-
-    // tracks partitions that failed to process, to retry from a specific offset
-    private val retryOffsets = mutableMapOf<TopicPartition, Long>()
-
-    private val partitionBackoffManager = PartitionBackoffManager()
 
     override fun start() {
         if (!running.compareAndSet(false, true)) {
@@ -63,7 +56,15 @@ class ManagedKafkaConsumer<K, V>(
         log.info("Starting Kafka consumer for topic $topic")
 
         consumer = KafkaConsumer<K, V>(config).also { kafkaConsumer ->
-            kafkaConsumer.subscribe(listOf(topic), createRebalanceListener(kafkaConsumer))
+            kafkaConsumer.subscribe(
+                listOf(topic),
+                ManagedConsumerRebalanceListener(
+                    consumer = kafkaConsumer,
+                    offsetManager = offsetManager,
+                    backoffManager = partitionBackoffManager,
+                ),
+            )
+
             scope.launch {
                 kafkaConsumer.use { runLoop(it) }
             }
@@ -90,129 +91,25 @@ class ManagedKafkaConsumer<K, V>(
         } catch (t: Throwable) {
             log.error("Unexpected error in consumer loop for $topic", t)
         } finally {
-            commitOffsets(consumer)
+            offsetManager.commit(consumer)
         }
     }
 
-    private fun updatePartitionPauseState(consumer: KafkaConsumer<K, V>) {
-        // split partitions into those that can be processed and those that are in backoff
-        val (partitionsInBackoff, processablePartitions) = consumer
-            .assignment()
-            .partition { tp -> partitionBackoffManager.isInBackoff(tp) }
-
-        // get current paused partitions
-        val pausedPartitions = consumer.paused()
-
-        // pause partitions that are in backoff and not already paused
-        partitionsInBackoff
-            .filterNot { it in pausedPartitions }
-            .takeIf { it.isNotEmpty() }
-            ?.let { consumer.pause(it) }
-
-        // resume paused partitions that are no longer in backoff
-        processablePartitions
-            .filter { it in pausedPartitions }
-            .takeIf { it.isNotEmpty() }
-            ?.let { consumer.resume(it) }
-    }
-
     private suspend fun pollOnce(consumer: KafkaConsumer<K, V>) {
-        if (retryOffsets.isNotEmpty()) retryFailedPartitions(consumer)
+        if (offsetManager.getRetryOffsets().isNotEmpty()) retryFailedPartitions(consumer, offsetManager.getRetryOffsets())
 
-        updatePartitionPauseState(consumer)
+        updatePartitionPauseState(consumer, partitionBackoffManager)
 
         val records = consumer.poll(Duration.ofMillis(pollTimeoutMs))
         if (records.isEmpty) return
 
-        records.partitions().forEach { tp ->
-            processPartition(tp, records.records(tp))
+        records.partitions().forEach { topicPartition ->
+            partitionProcessor.process(
+                topicPartition = topicPartition,
+                records = records.records(topicPartition),
+            )
         }
 
-        commitOffsets(consumer)
-    }
-
-    private suspend fun processPartition(topicPartition: TopicPartition, records: List<ConsumerRecord<K, V>>) {
-        for (record in records) {
-            try {
-                consume(record.key(), record.value())
-
-                uncommittedOffsets[topicPartition] = OffsetAndMetadata(record.offset() + 1)
-                retryOffsets.remove(topicPartition)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (t: Throwable) {
-                log.warn("Failed processing $topicPartition offset=${record.offset()}", t)
-
-                // set offset to retry from if not already set
-                retryOffsets[topicPartition] = retryOffsets[topicPartition]
-                    ?.coerceAtMost(record.offset())
-                    ?: record.offset()
-
-                partitionBackoffManager.incrementRetryCount(topicPartition)
-                break // stop on first failure in partition
-            }
-        }
-
-        if (topicPartition !in retryOffsets) {
-            partitionBackoffManager.resetRetryCount(topicPartition)
-        }
-    }
-
-    private fun retryFailedPartitions(consumer: KafkaConsumer<K, V>) {
-        retryOffsets.forEach { (tp, retryOffset) ->
-            try {
-                val currentOffset = consumer.position(tp)
-                if (currentOffset != retryOffset) {
-                    consumer.seek(tp, retryOffset)
-                    log.debug("Retrying {} from offset {} (was {})", tp, retryOffset, currentOffset)
-                }
-            } catch (e: IllegalStateException) {
-                log.warn("Partition $tp not assigned during retry seek", e)
-            }
-        }
-    }
-
-    private fun commitOffsets(consumer: KafkaConsumer<K, V>) {
-        if (uncommittedOffsets.isEmpty()) return
-
-        try {
-            consumer.commitSync(uncommittedOffsets)
-            log.info("Offsets committed: $uncommittedOffsets")
-            uncommittedOffsets.clear()
-        } catch (e: Exception) {
-            log.error("Commit failed for offsets $uncommittedOffsets", e)
-        }
-    }
-
-    private fun createRebalanceListener(consumer: KafkaConsumer<K, V>) = object : ConsumerRebalanceListener {
-        override fun onPartitionsRevoked(revokedPartitions: Collection<TopicPartition>) {
-            log.info("Partitions revoked: $revokedPartitions")
-
-            // collect offsets for revoked partitions that are pending commit
-            val offsetsToCommitDuringRebalance = uncommittedOffsets
-                .filterKeys { it in revokedPartitions }
-
-            // try to commit offsets before losing ownership
-            try {
-                if (offsetsToCommitDuringRebalance.isNotEmpty()) {
-                    consumer.commitSync(offsetsToCommitDuringRebalance)
-                    log.info("Committed offsets before revoke: $offsetsToCommitDuringRebalance")
-                }
-            } catch (e: Exception) {
-                // log but continue; the new owner will retry from last committed offsets
-                log.error("Failed to commit offsets during partition revoke for $revokedPartitions: $offsetsToCommitDuringRebalance", e)
-            } finally {
-                // remove committed/uncommitted state for revoked partitions
-                revokedPartitions.forEach { tp ->
-                    uncommittedOffsets.remove(tp)
-                    retryOffsets.remove(tp) // always remove, even if the commit failed
-                    partitionBackoffManager.resetRetryCount(tp)
-                }
-            }
-        }
-
-        override fun onPartitionsAssigned(partitions: Collection<TopicPartition>) {
-            log.info("Partitions assigned: $partitions")
-        }
+        offsetManager.commit(consumer)
     }
 }
