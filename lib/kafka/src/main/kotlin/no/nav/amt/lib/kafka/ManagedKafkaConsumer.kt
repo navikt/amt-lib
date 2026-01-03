@@ -52,7 +52,7 @@ class ManagedKafkaConsumer<K, V>(
     // tracks partitions that failed to process, to retry from a specific offset
     private val retryOffsets = mutableMapOf<TopicPartition, Long>()
 
-    val status = ConsumerStatus()
+    private val partitionBackoffManager = PartitionBackoffManager()
 
     override fun start() {
         if (!running.compareAndSet(false, true)) {
@@ -96,9 +96,9 @@ class ManagedKafkaConsumer<K, V>(
 
     private fun updatePartitionPauseState(consumer: KafkaConsumer<K, V>) {
         // split partitions into those that can be processed and those that are in backoff
-        val (processablePartitions, partitionsInBackoff) = consumer
+        val (partitionsInBackoff, processablePartitions) = consumer
             .assignment()
-            .partition { tp -> status.canProcessPartition(tp) }
+            .partition { tp -> partitionBackoffManager.isInBackoff(tp) }
 
         // get current paused partitions
         val pausedPartitions = consumer.paused()
@@ -148,13 +148,13 @@ class ManagedKafkaConsumer<K, V>(
                     ?.coerceAtMost(record.offset())
                     ?: record.offset()
 
-                status.incrementRetryCount(topicPartition)
+                partitionBackoffManager.incrementRetryCount(topicPartition)
                 break // stop on first failure in partition
             }
         }
 
         if (topicPartition !in retryOffsets) {
-            status.resetRetryCount(topicPartition)
+            partitionBackoffManager.resetRetryCount(topicPartition)
         }
     }
 
@@ -206,7 +206,7 @@ class ManagedKafkaConsumer<K, V>(
                 revokedPartitions.forEach { tp ->
                     uncommittedOffsets.remove(tp)
                     retryOffsets.remove(tp) // always remove, even if the commit failed
-                    status.resetRetryCount(tp)
+                    partitionBackoffManager.resetRetryCount(tp)
                 }
             }
         }
