@@ -16,7 +16,7 @@ class ManagedKafkaConsumer<K, V>(
     private val topic: String,
     private val config: Map<String, Any>,
     private val pollTimeoutMs: Long = 1000L,
-    private val consume: suspend (key: K, value: V) -> Unit,
+    consume: suspend (key: K, value: V) -> Unit,
 ) : Consumer<K, V> {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -67,8 +67,6 @@ class ManagedKafkaConsumer<K, V>(
         scope.coroutineContext[Job]?.cancelAndJoin()
         dispatcher.close()
     }
-
-    override suspend fun consume(key: K, value: V) = this.consume.invoke(key, value)
 
     private suspend fun runLoop(consumer: KafkaConsumer<K, V>) {
         try {
