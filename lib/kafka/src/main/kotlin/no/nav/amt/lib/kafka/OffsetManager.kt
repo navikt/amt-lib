@@ -30,6 +30,16 @@ internal class OffsetManager {
 
     fun clearRetry(tp: TopicPartition) = retryOffsets.remove(tp)
 
+    fun retryFailedPartitions(consumer: KafkaConsumer<*, *>) = retryOffsets.forEach { (tp, offset) ->
+        try {
+            val current = consumer.position(tp)
+            if (current != offset) consumer.seek(tp, offset)
+            log.debug("Retrying {} from offset {} (was {})", tp, offset, current)
+        } catch (e: IllegalStateException) {
+            log.warn("Partition $tp not assigned during retry seek", e)
+        }
+    }
+
     fun commit(consumer: KafkaConsumer<*, *>) {
         if (uncommittedOffsets.isEmpty()) return
         try {

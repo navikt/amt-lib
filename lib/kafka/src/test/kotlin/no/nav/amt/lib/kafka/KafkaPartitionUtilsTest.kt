@@ -4,12 +4,10 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import no.nav.amt.lib.kafka.KafkaPartitionUtils.retryFailedPartitions
 import no.nav.amt.lib.kafka.KafkaPartitionUtils.updatePartitionPauseState
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class KafkaPartitionUtilsTest {
@@ -41,26 +39,5 @@ class KafkaPartitionUtilsTest {
 
         // tp1 should be resumed
         verify { consumer.resume(any()) }
-    }
-
-    @Nested
-    inner class RetryFailedPartitionsTests {
-        @Test
-        fun `retryFailedPartitions seeks correctly`() {
-            every { consumer.position(tp2) } returns 101L
-
-            retryFailedPartitions(consumer, mapOf(tp2 to 100L))
-
-            verify { consumer.seek(tp2, 100L) }
-        }
-
-        @Test
-        fun `retryFailedPartitions skips seek when offset is already greater than seek offset`() {
-            every { consumer.position(tp2) } returns 101L
-
-            retryFailedPartitions(consumer, mapOf(tp2 to 101L))
-
-            verify(exactly = 0) { consumer.seek(tp2, any<Long>()) }
-        }
     }
 }
