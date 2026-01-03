@@ -5,7 +5,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
-import no.nav.amt.lib.kafka.KafkaPartitionUtils.updatePartitionPauseState
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
@@ -27,6 +26,7 @@ class ManagedKafkaConsumer<K, V>(
     private val partitionBackoffManager = PartitionBackoffManager()
     private val offsetManager = OffsetManager()
     private val partitionProcessor = PartitionProcessor(consume, partitionBackoffManager, offsetManager)
+    private val pauseController = PartitionPauseController(partitionBackoffManager)
 
     // single-threaded KafkaConsumer dispatcher
     private val dispatcher = Executors
@@ -84,7 +84,7 @@ class ManagedKafkaConsumer<K, V>(
 
     private suspend fun pollOnce(consumer: KafkaConsumer<K, V>) {
         offsetManager.retryFailedPartitions(consumer)
-        updatePartitionPauseState(consumer, partitionBackoffManager)
+        pauseController.update(consumer)
 
         val records = consumer.poll(Duration.ofMillis(pollTimeoutMs))
         if (records.isEmpty) return

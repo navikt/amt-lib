@@ -2,8 +2,10 @@ package no.nav.amt.lib.kafka
 
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
-internal object KafkaPartitionUtils {
-    fun <K, V> updatePartitionPauseState(consumer: KafkaConsumer<K, V>, backoffManager: PartitionBackoffManager) {
+internal class PartitionPauseController(
+    private val backoffManager: PartitionBackoffManager,
+) {
+    fun <K, V> update(consumer: KafkaConsumer<K, V>) {
         // split partitions into those that can be processed and those that are in backoff
         val (backoffPartitions, processable) = consumer
             .assignment()
