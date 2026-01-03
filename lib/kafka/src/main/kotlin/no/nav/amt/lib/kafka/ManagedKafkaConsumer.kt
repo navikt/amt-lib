@@ -14,18 +14,6 @@ import java.time.Duration
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
-/**
- * ManagedKafkaConsumer handles Kafka consumption with:
- *  - per-partition retries
- *  - offset tracking
- *  - safe commit on shutdown or rebalance
- *
- * uncommittedOffsets tracks the highest successfully processed offset per partition.
- * retryOffsets tracks the earliest offset that must be retried.
- *
- * A partition may temporarily exist in both maps if some records were processed
- * successfully before a failure occurred.
- */
 class ManagedKafkaConsumer<K, V>(
     private val topic: String,
     private val config: Map<String, Any>,
