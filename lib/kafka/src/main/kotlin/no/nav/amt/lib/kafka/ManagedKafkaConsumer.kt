@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -95,25 +94,38 @@ class ManagedKafkaConsumer<K, V>(
         }
     }
 
-    private suspend fun pollOnce(consumer: KafkaConsumer<K, V>) {
-        val delayMs = status.getDelayWhenAllPartitionsAreInRetry(consumer.assignment())
-        if (delayMs != null) {
-            log.debug("All assigned partitions are in retry, delaying $delayMs ms before next poll")
-            delay(delayMs)
-            return
-        }
+    private fun updatePartitionPauseState(consumer: KafkaConsumer<K, V>) {
+        // split partitions into those that can be processed and those that are in backoff
+        val (processablePartitions, partitionsInBackoff) = consumer
+            .assignment()
+            .partition { tp -> status.canProcessPartition(tp) }
 
+        // get current paused partitions
+        val pausedPartitions = consumer.paused()
+
+        // pause partitions that are in backoff and not already paused
+        partitionsInBackoff
+            .filterNot { it in pausedPartitions }
+            .takeIf { it.isNotEmpty() }
+            ?.let { consumer.pause(it) }
+
+        // resume paused partitions that are no longer in backoff
+        processablePartitions
+            .filter { it in pausedPartitions }
+            .takeIf { it.isNotEmpty() }
+            ?.let { consumer.resume(it) }
+    }
+
+    private suspend fun pollOnce(consumer: KafkaConsumer<K, V>) {
         if (retryOffsets.isNotEmpty()) retryFailedPartitions(consumer)
+
+        updatePartitionPauseState(consumer)
 
         val records = consumer.poll(Duration.ofMillis(pollTimeoutMs))
         if (records.isEmpty) return
 
         records.partitions().forEach { tp ->
-            if (status.canProcessPartition(tp)) {
-                processPartition(tp, records.records(tp))
-            } else {
-                log.debug("Consumer status for {} is failure, delaying {} ms before retrying", tp, status.backoffDuration(tp))
-            }
+            processPartition(tp, records.records(tp))
         }
 
         commitOffsets(consumer)

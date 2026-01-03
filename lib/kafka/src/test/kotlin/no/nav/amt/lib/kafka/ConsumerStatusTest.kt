@@ -1,7 +1,6 @@
 package no.nav.amt.lib.kafka
 
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import no.nav.amt.lib.testing.eventually
 import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.BeforeEach
@@ -38,13 +37,7 @@ class ConsumerStatusTest {
     fun `backoffDuration - skal aldri vare storre enn MAX_DELAY`() {
         val sut = ConsumerStatus()
 
-        repeat(25) { sut.incrementRetryCount(tp1) }
-
-        sut.backoffDuration(tp1) shouldBe ConsumerStatus.MAX_DELAY
-
-        sut.incrementRetryCount(tp1)
-
-        sut.backoffDuration(tp1) shouldBe ConsumerStatus.MAX_DELAY
+        sut.backoffDuration(25) shouldBe ConsumerStatus.MAX_DELAY
     }
 
     @Nested
@@ -75,36 +68,6 @@ class ConsumerStatusTest {
             eventually {
                 sut.canProcessPartition(tp1) shouldBe true
             }
-        }
-    }
-
-    @Nested
-    inner class GetDelayWhenAllPartitionsAreInRetryTests {
-        lateinit var sut: ConsumerStatus
-
-        @BeforeEach
-        fun setup() {
-            sut = ConsumerStatus()
-        }
-
-        @Test
-        fun `skal returnere null hvis ingen partisjoner er i retry`() {
-            sut.getDelayWhenAllPartitionsAreInRetry(setOf(tp1, tp2)) shouldBe null
-        }
-
-        @Test
-        fun `skal returnere null hvis kun 1 av 2 partisjoner er i retry`() {
-            sut.incrementRetryCount(tp1)
-
-            sut.getDelayWhenAllPartitionsAreInRetry(setOf(tp1, tp2)) shouldBe null
-        }
-
-        @Test
-        fun `skal returnere verdi hvis alle partisjoner er i retry`() {
-            sut.incrementRetryCount(tp1)
-            sut.incrementRetryCount(tp2)
-
-            sut.getDelayWhenAllPartitionsAreInRetry(setOf(tp1, tp2)) shouldNotBe null
         }
     }
 

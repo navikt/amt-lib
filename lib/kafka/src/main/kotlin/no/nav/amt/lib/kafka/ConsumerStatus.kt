@@ -8,23 +8,14 @@ class ConsumerStatus {
     private val retriesInternal = mutableMapOf<TopicPartition, Int>()
     private val partitionBackoffUntil = mutableMapOf<TopicPartition, Long>()
 
-    private fun backoffDuration(retryCount: Int): Long = min(COEFFICIENT * retryCount * retryCount + BASE_DELAY_MS, MAX_DELAY)
-
-    fun backoffDuration(tp: TopicPartition): Long {
-        val retryCount = retriesInternal[tp] ?: 0
-        return backoffDuration(retryCount)
+    fun incrementRetryCount(tp: TopicPartition) {
+        val newRetryCount = retriesInternal.compute(tp) { _, current -> (current ?: 0) + 1 }!!
+        partitionBackoffUntil[tp] = System.currentTimeMillis() + backoffDuration(newRetryCount)
     }
-
-    fun retryCount(tp: TopicPartition) = retriesInternal[tp] ?: 0
 
     fun resetRetryCount(tp: TopicPartition) {
         retriesInternal.remove(tp)
         partitionBackoffUntil.remove(tp)
-    }
-
-    fun incrementRetryCount(tp: TopicPartition) {
-        val newRetryCount = retriesInternal.compute(tp) { _, current -> (current ?: 0) + 1 }!!
-        partitionBackoffUntil[tp] = System.currentTimeMillis() + backoffDuration(newRetryCount)
     }
 
     fun canProcessPartition(tp: TopicPartition): Boolean {
@@ -32,16 +23,10 @@ class ConsumerStatus {
         return System.currentTimeMillis() >= until
     }
 
-    fun getDelayWhenAllPartitionsAreInRetry(partitions: Collection<TopicPartition>): Long? {
-        if (partitions.any { canProcessPartition(it) }) return null
+    fun backoffDuration(retryCount: Int): Long = min(COEFFICIENT * retryCount * retryCount + BASE_DELAY_MS, MAX_DELAY)
 
-        val now = System.currentTimeMillis()
-        val stillInBackoff = partitions.mapNotNull { tp ->
-            partitionBackoffUntil[tp]?.takeIf { it > now }
-        }
-
-        return stillInBackoff.minOrNull()?.minus(now)
-    }
+    // only used in tests
+    fun retryCount(tp: TopicPartition) = retriesInternal[tp] ?: 0
 
     companion object {
         private const val COEFFICIENT = 500L
