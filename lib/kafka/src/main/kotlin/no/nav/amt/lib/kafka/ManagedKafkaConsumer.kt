@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 
 class ManagedKafkaConsumer<K, V>(
     private val topic: String,
@@ -73,8 +74,11 @@ class ManagedKafkaConsumer<K, V>(
             while (running.get()) pollOnce(consumer)
         } catch (_: WakeupException) {
             log.info("Consumer for $topic shutting down")
-        } catch (t: Throwable) {
-            log.error("Unexpected error in consumer loop for $topic", t)
+        } catch (ce: CancellationException) {
+            log.info("Consumer coroutine cancelled for $topic")
+            throw ce
+        } catch (throwable: Throwable) {
+            log.error("Unexpected error in consumer loop for $topic", throwable)
         } finally {
             offsetManager.commit(consumer)
         }

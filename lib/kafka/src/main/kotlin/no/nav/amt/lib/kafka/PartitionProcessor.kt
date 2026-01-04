@@ -18,8 +18,8 @@ internal class PartitionProcessor<K, V>(
                 consume(record.key(), record.value())
 
                 offsetManager.markProcessed(topicPartition, record.offset() + 1)
-            } catch (e: CancellationException) {
-                throw e
+            } catch (ce: CancellationException) {
+                throw ce
             } catch (t: Throwable) {
                 log.warn("Failed processing $topicPartition offset=${record.offset()}", t)
                 offsetManager.markRetry(topicPartition, record.offset())
@@ -27,6 +27,7 @@ internal class PartitionProcessor<K, V>(
                 break // stop on first failure in partition
             }
         }
+
         if (topicPartition !in offsetManager.getRetryOffsets()) {
             backoffManager.resetRetryCount(topicPartition)
         }

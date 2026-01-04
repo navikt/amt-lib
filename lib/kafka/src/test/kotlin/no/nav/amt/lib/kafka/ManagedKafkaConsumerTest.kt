@@ -4,24 +4,19 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import no.nav.amt.lib.kafka.KafkaTestUtils.TOPIC_IN_TEST
 import no.nav.amt.lib.kafka.KafkaTestUtils.intConsumerConfig
+import no.nav.amt.lib.kafka.KafkaTestUtils.produceIntInt
+import no.nav.amt.lib.kafka.KafkaTestUtils.produceStringString
+import no.nav.amt.lib.kafka.KafkaTestUtils.produceUUIDByteArray
 import no.nav.amt.lib.kafka.KafkaTestUtils.stringConsumerConfig
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.testing.SingletonKafkaProvider
 import no.nav.amt.lib.testing.eventually
 import org.apache.kafka.clients.admin.NewTopic
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
-import org.apache.kafka.common.serialization.ByteArraySerializer
-import org.apache.kafka.common.serialization.IntegerSerializer
-import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
-import org.apache.kafka.common.serialization.UUIDSerializer
 import org.junit.jupiter.api.Test
 import java.time.Duration
-import java.util.Properties
 import java.util.UUID
 
 class ManagedKafkaConsumerTest {
@@ -168,41 +163,5 @@ class ManagedKafkaConsumerTest {
         eventually(Duration.ofSeconds(15)) {
             consumed.values.toSet() shouldBe setOf(lastValue)
         }
-    }
-}
-
-private fun produceIntInt(record: ProducerRecord<Int, Int>): RecordMetadata {
-    KafkaProducer<Int, Int>(
-        Properties().apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SingletonKafkaProvider.getHost())
-            put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer::class.java)
-            put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer::class.java)
-        },
-    ).use { producer ->
-        return producer.send(record).get()
-    }
-}
-
-private fun produceStringString(record: ProducerRecord<String, String>): RecordMetadata {
-    KafkaProducer<String, String>(
-        Properties().apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SingletonKafkaProvider.getHost())
-            put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java)
-            put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java)
-        },
-    ).use { producer ->
-        return producer.send(record).get()
-    }
-}
-
-private fun produceUUIDByteArray(record: ProducerRecord<UUID, ByteArray>): RecordMetadata {
-    KafkaProducer<UUID, ByteArray>(
-        Properties().apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SingletonKafkaProvider.getHost())
-            put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, UUIDSerializer::class.java)
-            put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer::class.java)
-        },
-    ).use { producer ->
-        return producer.send(record).get()
     }
 }
