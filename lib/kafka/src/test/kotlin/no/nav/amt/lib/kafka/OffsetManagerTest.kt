@@ -7,6 +7,8 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
+import no.nav.amt.lib.kafka.KafkaTestUtils.topicPartition1
+import no.nav.amt.lib.kafka.KafkaTestUtils.topicPartition2
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
@@ -17,9 +19,6 @@ import org.junit.jupiter.api.Test
 class OffsetManagerTest {
     private lateinit var sut: OffsetManager
 
-    private val tp1 = TopicPartition("topic", 0)
-    private val tp2 = TopicPartition("topic", 1)
-
     @BeforeEach
     fun setup() {
         sut = OffsetManager()
@@ -27,63 +26,62 @@ class OffsetManagerTest {
 
     @Test
     fun `markProcessed sets uncommitted offset and clears retry`() {
-        sut.markRetry(tp1, 10)
-        sut.markProcessed(tp1, 42)
+        sut.markRetry(topicPartition1, 10)
+        sut.markProcessed(topicPartition1, 42)
 
         val offsetsToCommit = sut.getOffsetsToCommit()
-        offsetsToCommit shouldBe mapOf(tp1 to OffsetAndMetadata(42))
 
+        offsetsToCommit shouldBe mapOf(topicPartition1 to OffsetAndMetadata(42))
         sut.getRetryOffsets() shouldBe emptyMap()
     }
 
     @Test
     fun `markRetry sets or updates retry offset`() {
-        sut.markRetry(tp1, 50)
-        sut.markRetry(tp1, 30) // skal coerceAtMost
+        sut.markRetry(topicPartition1, 50)
+        sut.markRetry(topicPartition1, 30)
 
-        sut.getRetryOffsets() shouldBe mapOf(tp1 to 30)
+        sut.getRetryOffsets() shouldBe mapOf(topicPartition1 to 30)
     }
 
     @Test
     fun `clearCommitted removes offsets`() {
-        sut.markProcessed(tp1, 100)
-        sut.markProcessed(tp2, 200)
+        sut.markProcessed(topicPartition1, 100)
+        sut.markProcessed(topicPartition2, 200)
 
-        sut.clearCommitted(tp1)
+        sut.clearCommitted(topicPartition1)
 
-        sut.getOffsetsToCommit() shouldBe mapOf(tp2 to OffsetAndMetadata(200))
+        sut.getOffsetsToCommit() shouldBe mapOf(topicPartition2 to OffsetAndMetadata(200))
     }
 
     @Test
     fun `clearRetry removes retry`() {
-        sut.markRetry(tp1, 10)
-        sut.clearRetry(tp1)
+        sut.markRetry(topicPartition1, 10)
+        sut.clearRetry(topicPartition1)
 
         sut.getRetryOffsets() shouldBe emptyMap()
     }
 
     @Nested
     inner class CommitTests {
+        val consumer: KafkaConsumer<Any, Any> = mockk(relaxed = true)
+
         @Test
         fun `commit calls consumer and clears offsets`() {
-            val consumer = mockk<KafkaConsumer<Any, Any>>(relaxed = true)
+            sut.markProcessed(topicPartition1, 123)
+            sut.markProcessed(topicPartition2, 456)
 
-            sut.markProcessed(tp1, 123)
-            sut.markProcessed(tp2, 456)
+            val expectedOffsets = sut.getOffsetsToCommit()
+            expectedOffsets.size shouldBe 2
 
             sut.commit(consumer)
 
-            verify {
-                consumer.commitSync(sut.getOffsetsToCommit().mapValues { it.value })
-            }
-
+            verify { consumer.commitSync(expectedOffsets) }
             sut.getOffsetsToCommit() shouldBe emptyMap()
         }
 
         @Test
         fun `commit handles exception`() {
-            val consumer = mockk<KafkaConsumer<Any, Any>>()
-            sut.markProcessed(tp1, 123)
+            sut.markProcessed(topicPartition1, 123)
 
             every {
                 consumer.commitSync(any<Map<TopicPartition, OffsetAndMetadata>>())
@@ -93,7 +91,7 @@ class OffsetManagerTest {
                 sut.commit(consumer)
             }
 
-            sut.getOffsetsToCommit() shouldBe mapOf(tp1 to OffsetAndMetadata(123))
+            sut.getOffsetsToCommit() shouldBe mapOf(topicPartition1 to OffsetAndMetadata(123))
         }
     }
 
@@ -104,21 +102,21 @@ class OffsetManagerTest {
         @Test
         fun `retryFailedPartitions seeks correctly`() {
             every { consumer.seek(any<TopicPartition>(), any<Long>()) } just Runs
-            every { consumer.position(tp2) } returns 101L
+            every { consumer.position(topicPartition2) } returns 101L
 
-            sut.markRetry(tp2, 100L)
+            sut.markRetry(topicPartition2, 100L)
             sut.retryFailedPartitions(consumer)
 
-            verify { consumer.seek(tp2, 100L) }
+            verify { consumer.seek(topicPartition2, 100L) }
         }
 
         @Test
         fun `retryFailedPartitions skips seek when offset is already greater than seek offset`() {
-            every { consumer.position(tp2) } returns 101L
+            every { consumer.position(topicPartition2) } returns 101L
 
-            sut.markRetry(tp2, 101L)
+            sut.markRetry(topicPartition2, 101L)
 
-            verify(exactly = 0) { consumer.seek(tp2, any<Long>()) }
+            verify(exactly = 0) { consumer.seek(topicPartition2, any<Long>()) }
         }
     }
 }

@@ -6,6 +6,7 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.clients.producer.RecordMetadata
+import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.apache.kafka.common.serialization.IntegerDeserializer
 import org.apache.kafka.common.serialization.IntegerSerializer
@@ -17,6 +18,9 @@ import java.util.UUID
 
 object KafkaTestUtils {
     const val TOPIC_IN_TEST = "test.topic"
+
+    val topicPartition1 = TopicPartition("topic", 1)
+    val topicPartition2 = TopicPartition("topic", 2)
 
     val stringConsumerConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost()).consumerConfig(
         keyDeserializer = StringDeserializer(),

@@ -5,6 +5,8 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import no.nav.amt.lib.kafka.KafkaTestUtils.topicPartition1
+import no.nav.amt.lib.kafka.KafkaTestUtils.topicPartition2
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
@@ -17,9 +19,6 @@ class ManagedConsumerRebalanceListenerTest {
     private val backoffManager: PartitionBackoffManager = mockk(relaxed = true)
     private val listener = ManagedConsumerRebalanceListener(consumer, offsetManager, backoffManager)
 
-    private val tp1 = TopicPartition("topic", 0)
-    private val tp2 = TopicPartition("topic", 1)
-
     @BeforeEach
     fun setup() {
         clearAllMocks()
@@ -27,27 +26,27 @@ class ManagedConsumerRebalanceListenerTest {
 
     @Test
     fun `onPartitionsRevoked commits offsets and clears state`() {
-        val offsetsToCommit = mapOf<TopicPartition, OffsetAndMetadata>(tp1 to mockk(), tp2 to mockk())
+        val offsetsToCommit = mapOf<TopicPartition, OffsetAndMetadata>(topicPartition1 to mockk(), topicPartition2 to mockk())
         every { offsetManager.getOffsetsToCommit() } returns offsetsToCommit
 
-        listener.onPartitionsRevoked(listOf(tp1, tp2))
+        listener.onPartitionsRevoked(listOf(topicPartition1, topicPartition2))
 
         verify { consumer.commitSync(offsetsToCommit) }
 
-        verify { offsetManager.clearCommitted(tp1) }
-        verify { offsetManager.clearCommitted(tp2) }
+        verify { offsetManager.clearCommitted(topicPartition1) }
+        verify { offsetManager.clearCommitted(topicPartition2) }
 
-        verify { offsetManager.clearRetry(tp1) }
-        verify { offsetManager.clearRetry(tp2) }
+        verify { offsetManager.clearRetry(topicPartition1) }
+        verify { offsetManager.clearRetry(topicPartition2) }
 
-        verify { backoffManager.resetRetryCount(tp1) }
-        verify { backoffManager.resetRetryCount(tp2) }
+        verify { backoffManager.resetRetryCount(topicPartition1) }
+        verify { backoffManager.resetRetryCount(topicPartition2) }
     }
 
     @Test
     fun `onPartitionsAssigned logs assigned partitions`() {
         shouldNotThrowAny {
-            listener.onPartitionsAssigned(listOf(tp1, tp2))
+            listener.onPartitionsAssigned(listOf(topicPartition1, topicPartition2))
         }
     }
 }

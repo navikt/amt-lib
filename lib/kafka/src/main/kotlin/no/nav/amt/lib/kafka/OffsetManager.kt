@@ -88,13 +88,14 @@ internal class OffsetManager {
      * @param consumer the KafkaConsumer to commit offsets for
      */
     fun commit(consumer: KafkaConsumer<*, *>) {
-        if (uncommittedOffsets.isEmpty()) return
+        val offsetsToCommit = getOffsetsToCommit()
+        if (offsetsToCommit.isEmpty()) return
         try {
-            consumer.commitSync(uncommittedOffsets)
-            log.info("Offsets committed: $uncommittedOffsets")
+            consumer.commitSync(offsetsToCommit)
+            log.info("Offsets committed: $offsetsToCommit")
             uncommittedOffsets.clear()
         } catch (e: Exception) {
-            log.error("Commit failed for offsets $uncommittedOffsets", e)
+            log.error("Commit failed for offsets $offsetsToCommit", e)
         }
     }
 }
