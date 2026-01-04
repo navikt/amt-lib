@@ -13,6 +13,26 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 
+/**
+ * A managed Kafka consumer that integrates with coroutines for structured concurrency.
+ *
+ * This consumer handles:
+ * - Polling Kafka topics in a single-threaded dispatcher.
+ * - Processing records via a suspending `consume` function.
+ * - Tracking offsets for processed records ([OffsetManager]).
+ * - Retrying failed records and applying backoff ([PartitionBackoffManager]).
+ * - Pausing/resuming partitions based on backoff state ([PartitionPauseController]).
+ * - Graceful shutdown using [KafkaConsumer.wakeup] and coroutine cancellation.
+ *
+ * Generics [K, V] represent the key and value types of the consumed Kafka records.
+ *
+ * @param K the type of the record key
+ * @param V the type of the record value
+ * @property topic the Kafka topic to consume from
+ * @property config the Kafka consumer configuration
+ * @property pollTimeoutMs the timeout for each poll in milliseconds (default 1000ms)
+ * @property consume a suspending lambda that processes each record
+ */
 class ManagedKafkaConsumer<K, V>(
     private val topic: String,
     private val config: Map<String, Any>,
@@ -35,6 +55,13 @@ class ManagedKafkaConsumer<K, V>(
         .asCoroutineDispatcher()
     private val scope = CoroutineScope(dispatcher)
 
+    /**
+     * Starts the consumer.
+     *
+     * - Subscribes to the configured topic.
+     * - Launches a coroutine to continuously poll and process records.
+     * - If already running, logs a warning and does nothing.
+     */
     override fun start() {
         if (!running.compareAndSet(false, true)) {
             log.warn("Consumer for $topic already started")
@@ -59,6 +86,14 @@ class ManagedKafkaConsumer<K, V>(
         }
     }
 
+    /**
+     * Stops the consumer gracefully.
+     *
+     * - Sets the running flag to false.
+     * - Wakes up the Kafka consumer if it is polling.
+     * - Cancels and joins the consumer coroutine.
+     * - Closes the dispatcher.
+     */
     override suspend fun close() {
         if (!running.compareAndSet(true, false)) return
 
@@ -69,6 +104,14 @@ class ManagedKafkaConsumer<K, V>(
         dispatcher.close()
     }
 
+    /**
+     * Runs the main polling loop.
+     *
+     * Continuously polls the Kafka topic and processes records using [pollOnce].
+     * Handles shutdown via [WakeupException] and coroutine cancellation.
+     *
+     * @param consumer the KafkaConsumer instance to use
+     */
     private suspend fun runLoop(consumer: KafkaConsumer<K, V>) {
         try {
             while (running.get()) pollOnce(consumer)
@@ -84,6 +127,16 @@ class ManagedKafkaConsumer<K, V>(
         }
     }
 
+    /**
+     * Polls Kafka for records once and processes them.
+     *
+     * - Retries any failed partitions.
+     * - Pauses/resumes partitions based on backoff state.
+     * - Processes records using [PartitionProcessor].
+     * - Commits offsets after processing.
+     *
+     * @param consumer the KafkaConsumer instance to poll from
+     */
     private suspend fun pollOnce(consumer: KafkaConsumer<K, V>) {
         offsetManager.retryFailedPartitions(consumer)
         pauseController.update(consumer)
