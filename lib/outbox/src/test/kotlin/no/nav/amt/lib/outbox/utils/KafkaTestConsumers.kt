@@ -14,7 +14,11 @@ fun stringStringConsumer(topic: String, block: suspend (k: String, v: String) ->
         groupId = "test-consumer-${UUID.randomUUID()}",
     )
 
-    return ManagedKafkaConsumer(topic, config, block)
+    return ManagedKafkaConsumer(
+        topic = topic,
+        config = config,
+        consume = block,
+    )
 }
 
 fun assertProduced(topic: String, block: suspend (cache: Map<String, String>) -> Unit) {
@@ -27,6 +31,6 @@ fun assertProduced(topic: String, block: suspend (cache: Map<String, String>) ->
     runBlocking {
         consumer.start()
         block(cache)
-        consumer.stop()
+        consumer.close()
     }
 }

@@ -1,174 +1,156 @@
 package no.nav.amt.lib.kafka
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.clients.consumer.ConsumerRecords
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.clients.consumer.OffsetAndMetadata
-import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
 import java.time.Duration
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 
+/**
+ * A managed Kafka consumer that integrates with coroutines for structured concurrency.
+ *
+ * This consumer handles:
+ * - Polling Kafka topics in a single-threaded dispatcher.
+ * - Processing records via a suspending `consume` function.
+ * - Tracking offsets for processed records ([OffsetManager]).
+ * - Retrying failed records and applying backoff ([PartitionBackoffManager]).
+ * - Pausing/resuming partitions based on backoff state ([PartitionPauseController]).
+ * - Graceful shutdown using [KafkaConsumer.wakeup] and coroutine cancellation.
+ *
+ * Generics [K, V] represent the key and value types of the consumed Kafka records.
+ *
+ * @param K the type of the record key
+ * @param V the type of the record value
+ * @property topic the Kafka topic to consume from
+ * @property config the Kafka consumer configuration
+ * @property pollTimeoutMs the timeout for each poll in milliseconds (default 1000ms)
+ * @property consume a suspending lambda that processes each record
+ */
 class ManagedKafkaConsumer<K, V>(
     private val topic: String,
-    private val config: Map<String, *>,
-    private val consume: suspend (key: K, value: V) -> Unit,
+    private val config: Map<String, Any>,
+    private val pollTimeoutMs: Long = 1000L,
+    consume: suspend (key: K, value: V) -> Unit,
 ) : Consumer<K, V> {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val job = Job()
-    private val scope = CoroutineScope(Dispatchers.IO + job)
-    private val offsetsToCommit = mutableMapOf<TopicPartition, OffsetAndMetadata>()
 
-    private var running = false
+    private val running = AtomicBoolean(false)
+    private lateinit var consumer: KafkaConsumer<K, V>
 
-    val status: ConsumerStatus = ConsumerStatus()
-    private lateinit var runState: Deferred<Unit>
+    private val partitionBackoffManager = PartitionBackoffManager()
+    private val offsetManager = OffsetManager()
+    private val partitionProcessor = PartitionProcessor(consume, partitionBackoffManager, offsetManager)
+    private val pauseController = PartitionPauseController(partitionBackoffManager)
 
+    // single-threaded KafkaConsumer dispatcher
+    private val dispatcher = Executors
+        .newSingleThreadExecutor { r -> Thread(r, "kafka-consumer-$topic") }
+        .asCoroutineDispatcher()
+    private val scope = CoroutineScope(dispatcher)
+
+    /**
+     * Starts the consumer.
+     *
+     * - Subscribes to the configured topic.
+     * - Launches a coroutine to continuously poll and process records.
+     * - If already running, logs a warning and does nothing.
+     */
     override fun start() {
-        log.info("Starting consumer for topic: $topic")
-        runState = run()
+        if (!running.compareAndSet(false, true)) {
+            log.warn("Consumer for $topic already started")
+            return
+        }
+
+        log.info("Starting Kafka consumer for topic $topic")
+
+        consumer = KafkaConsumer<K, V>(config).also { kafkaConsumer ->
+            kafkaConsumer.subscribe(
+                listOf(topic),
+                ManagedConsumerRebalanceListener(
+                    consumer = kafkaConsumer,
+                    offsetManager = offsetManager,
+                    backoffManager = partitionBackoffManager,
+                ),
+            )
+
+            scope.launch {
+                kafkaConsumer.use { runLoop(it) }
+            }
+        }
     }
 
-    override suspend fun consume(key: K, value: V) = this.consume.invoke(key, value)
-
-    fun stop() {
-        running = false
-    }
-
+    /**
+     * Stops the consumer gracefully.
+     *
+     * - Sets the running flag to false.
+     * - Wakes up the Kafka consumer if it is polling.
+     * - Cancels and joins the consumer coroutine.
+     * - Closes the dispatcher.
+     */
     override suspend fun close() {
-        log.info("Closing consumer for topic: $topic.. ..")
-        stop()
-        return runState.await().also {
-            log.info("Closed consumer for topic: $topic")
-        }
+        if (!running.compareAndSet(true, false)) return
+
+        log.info("Stopping Kafka consumer for topic $topic")
+
+        consumer.wakeup()
+        scope.coroutineContext[Job]?.cancelAndJoin()
+        dispatcher.close()
     }
 
-    private fun run() = scope.async {
-        running = true
-
-        KafkaConsumer<K, V>(config).use { consumer ->
-            subscribe(consumer)
-        }
-    }
-
-    private suspend fun subscribe(consumer: KafkaConsumer<K, V>) {
+    /**
+     * Runs the main polling loop.
+     *
+     * Continuously polls the Kafka topic and processes records using [pollOnce].
+     * Handles shutdown via [WakeupException] and coroutine cancellation.
+     *
+     * @param consumer the KafkaConsumer instance to use
+     */
+    private suspend fun runLoop(consumer: KafkaConsumer<K, V>) {
         try {
-            consumer.subscribe(listOf(topic), rebalanceListener(consumer))
-
-            while (running) {
-                poll(consumer)
-            }
+            while (running.get()) pollOnce(consumer)
         } catch (_: WakeupException) {
-            log.info("Consumer for $topic is exiting")
-            stop()
-        } catch (t: Throwable) {
-            log.error("Something went wrong with consumer for topic $topic", t)
-            throw t
-        }
-    }
-
-    private suspend fun poll(consumer: KafkaConsumer<K, V>) {
-        if (status.isFailure) {
-            log.info(
-                "Consumer status for topic $topic is failure, " +
-                        "delaying ${status.backoffDuration}ms before retrying",
-            )
-            delay(status.backoffDuration)
-        }
-
-        try {
-            val records = consumer.poll(Duration.ofMillis(1000))
-
-            seekToEarliestOffsets(records, consumer)
-
-            if (!records.isEmpty) {
-                log.info("Consumer for $topic polled ${records.count()} records.")
-            }
-
-            records.forEach { record ->
-                process(record)
-
-                val partition = TopicPartition(record.topic(), record.partition())
-                val offset = OffsetAndMetadata(record.offset() + 1)
-
-                offsetsToCommit[partition] = offset
-                status.success()
-            }
-        } catch (t: Throwable) {
-            log.error(t.message, t)
-            status.failure()
+            log.info("Consumer for $topic shutting down")
+        } catch (ce: CancellationException) {
+            log.info("Consumer coroutine cancelled for $topic")
+            throw ce
+        } catch (throwable: Throwable) {
+            log.error("Unexpected error in consumer loop for $topic", throwable)
         } finally {
-            commitOffsets(consumer)
+            offsetManager.commit(consumer)
         }
     }
 
-    private fun commitOffsets(consumer: KafkaConsumer<K, V>) {
-        if (offsetsToCommit.isNotEmpty()) {
-            offsetsToCommit.forEach { (partition, offset) -> consumer.seek(partition, offset) }
-            consumer.commitSync(offsetsToCommit)
+    /**
+     * Polls Kafka for records once and processes them.
+     *
+     * - Retries any failed partitions.
+     * - Pauses/resumes partitions based on backoff state.
+     * - Processes records using [PartitionProcessor].
+     * - Commits offsets after processing.
+     *
+     * @param consumer the KafkaConsumer instance to poll from
+     */
+    private suspend fun pollOnce(consumer: KafkaConsumer<K, V>) {
+        offsetManager.retryFailedPartitions(consumer)
+        pauseController.update(consumer)
 
-            log.info("Committed offsets $offsetsToCommit")
-            offsetsToCommit.clear()
-        }
-    }
+        val records = consumer.poll(Duration.ofMillis(pollTimeoutMs))
+        if (records.isEmpty) return
 
-    private fun seekToEarliestOffsets(records: ConsumerRecords<K, V>, consumer: KafkaConsumer<K, V>) {
-        val offsetMap = mutableMapOf<TopicPartition, OffsetAndMetadata>()
-
-        records.forEach { record ->
-            val topicPartition = TopicPartition(record.topic(), record.partition())
-            val offsetAndMetadata = OffsetAndMetadata(record.offset())
-
-            val storedOffset = offsetMap[topicPartition]
-
-            if (storedOffset == null || offsetAndMetadata.offset() < storedOffset.offset()) {
-                offsetMap[topicPartition] = offsetAndMetadata
-            }
-        }
-
-        offsetMap.forEach { consumer.seek(it.key, it.value) }
-    }
-
-    private suspend fun process(record: ConsumerRecord<K, V>) {
-        try {
-            consume(record.key(), record.value())
-            log.info(
-                "Consumed record for " +
-                        "topic=${record.topic()} " +
-                        "key=${record.key()} " +
-                        "partition=${record.partition()} " +
-                        "offset=${record.offset()}",
+        records.partitions().forEach { topicPartition ->
+            partitionProcessor.process(
+                topicPartition = topicPartition,
+                records = records.records(topicPartition),
             )
-        } catch (t: Throwable) {
-            val msg = "Failed to consume record for " +
-                    "topic=${record.topic()} " +
-                    "key=${record.key()} " +
-                    "partition=${record.partition()} " +
-                    "offset=${record.offset()}"
-            throw ConsumerProcessingException(msg, t)
-        }
-    }
-
-    class ConsumerProcessingException(
-        msg: String,
-        cause: Throwable?,
-    ) : RuntimeException(msg, cause)
-
-    private fun rebalanceListener(consumer: KafkaConsumer<K, V>) = object : ConsumerRebalanceListener {
-        override fun onPartitionsRevoked(partitions: MutableCollection<TopicPartition>) {
-            log.info("Partitions revoked $partitions, committing offsets")
-            commitOffsets(consumer)
         }
 
-        override fun onPartitionsAssigned(partitions: MutableCollection<TopicPartition>) {
-            log.info("Partitions assigned $partitions")
-        }
+        offsetManager.commit(consumer)
     }
 }

@@ -15,4 +15,6 @@ dependencies {
     testImplementation(libs.junit.jupiter.engine)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.assertions.json)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.mockk)
 }

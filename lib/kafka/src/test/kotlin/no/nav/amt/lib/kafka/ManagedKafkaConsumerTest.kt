@@ -1,59 +1,43 @@
 package no.nav.amt.lib.kafka
 
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.runBlocking
+import no.nav.amt.lib.kafka.KafkaTestUtils.TOPIC_IN_TEST
+import no.nav.amt.lib.kafka.KafkaTestUtils.intConsumerConfig
+import no.nav.amt.lib.kafka.KafkaTestUtils.produceIntInt
+import no.nav.amt.lib.kafka.KafkaTestUtils.produceStringString
+import no.nav.amt.lib.kafka.KafkaTestUtils.produceUUIDByteArray
+import no.nav.amt.lib.kafka.KafkaTestUtils.stringConsumerConfig
 import no.nav.amt.lib.kafka.config.LocalKafkaConfig
 import no.nav.amt.lib.testing.SingletonKafkaProvider
 import no.nav.amt.lib.testing.eventually
 import org.apache.kafka.clients.admin.NewTopic
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
-import org.apache.kafka.common.serialization.ByteArraySerializer
-import org.apache.kafka.common.serialization.IntegerDeserializer
-import org.apache.kafka.common.serialization.IntegerSerializer
-import org.apache.kafka.common.serialization.StringDeserializer
-import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.serialization.UUIDDeserializer
-import org.apache.kafka.common.serialization.UUIDSerializer
 import org.junit.jupiter.api.Test
 import java.time.Duration
-import java.util.Properties
 import java.util.UUID
 
 class ManagedKafkaConsumerTest {
-    private val topic = "test.topic"
-
-    private val stringConsumerConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost()).consumerConfig(
-        keyDeserializer = StringDeserializer(),
-        valueDeserializer = StringDeserializer(),
-        groupId = "test-consumer-${UUID.randomUUID()}",
-    )
-
-    private val intConsumerConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost()).consumerConfig(
-        keyDeserializer = IntegerDeserializer(),
-        valueDeserializer = IntegerDeserializer(),
-        groupId = "test-consumer-${UUID.randomUUID()}",
-    )
-
     @Test
     fun `ManagedKafkaConsumer - konsumerer record med String, String`() {
         val key = "key"
         val value = "value"
         val cache = mutableMapOf<String, String>()
 
-        produceStringString(ProducerRecord(topic, key, value))
+        produceStringString(ProducerRecord(TOPIC_IN_TEST, key, value))
 
-        val consumer = ManagedKafkaConsumer(topic, stringConsumerConfig) { k: String, v: String ->
+        val consumer = ManagedKafkaConsumer(TOPIC_IN_TEST, stringConsumerConfig) { k: String, v: String ->
             cache[k] = v
         }
         consumer.start()
 
         eventually {
             cache[key] shouldBe value
-            consumer.stop()
         }
+
+        runBlocking { consumer.close() }
     }
 
     @Test
@@ -79,30 +63,35 @@ class ManagedKafkaConsumerTest {
 
         eventually {
             cache[key] shouldBe value
-            consumer.stop()
         }
+
+        runBlocking { consumer.close() }
     }
 
     @Test
     fun `ManagedKafkaConsumer - prøver å konsumere melding på nytt hvis noe feiler`() {
-        val key = "key"
-        val value = "value"
+        produceStringString(ProducerRecord(TOPIC_IN_TEST, "~key1~", "~value~"))
+        produceStringString(ProducerRecord(TOPIC_IN_TEST, "~key2~", "~value~"))
 
-        var antallGangerKallt = 0
+        var numberOfInvocations = 0
+        val failOnceKeys = mutableSetOf("~key2~")
 
-        produceStringString(ProducerRecord(topic, key, value))
+        val consumer = ManagedKafkaConsumer<String, String>(TOPIC_IN_TEST, stringConsumerConfig) { key, _ ->
+            numberOfInvocations++
 
-        val consumer = ManagedKafkaConsumer<String, String>(topic, stringConsumerConfig) { _, _ ->
-            antallGangerKallt++
-            error("skal feile noen ganger")
+            if (key in failOnceKeys) {
+                failOnceKeys.remove(key)
+                error("Should retry")
+            }
         }
+
         consumer.start()
 
         eventually {
-            antallGangerKallt shouldBe 2
-            consumer.status.retries shouldBe antallGangerKallt
-            consumer.stop()
+            numberOfInvocations shouldBe 3
         }
+
+        runBlocking { consumer.close() }
     }
 
     @Test
@@ -126,6 +115,7 @@ class ManagedKafkaConsumerTest {
         }
 
         consumer.start()
+
         data.forEach {
             val partition = (0..3).random()
             produceIntInt(ProducerRecord(intTopic.name(), partition, it, it))
@@ -173,41 +163,5 @@ class ManagedKafkaConsumerTest {
         eventually(Duration.ofSeconds(15)) {
             consumed.values.toSet() shouldBe setOf(lastValue)
         }
-    }
-}
-
-private fun produceIntInt(record: ProducerRecord<Int, Int>): RecordMetadata {
-    KafkaProducer<Int, Int>(
-        Properties().apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SingletonKafkaProvider.getHost())
-            put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer::class.java)
-            put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer::class.java)
-        },
-    ).use { producer ->
-        return producer.send(record).get()
-    }
-}
-
-private fun produceStringString(record: ProducerRecord<String, String>): RecordMetadata {
-    KafkaProducer<String, String>(
-        Properties().apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SingletonKafkaProvider.getHost())
-            put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java)
-            put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java)
-        },
-    ).use { producer ->
-        return producer.send(record).get()
-    }
-}
-
-private fun produceUUIDByteArray(record: ProducerRecord<UUID, ByteArray>): RecordMetadata {
-    KafkaProducer<UUID, ByteArray>(
-        Properties().apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, SingletonKafkaProvider.getHost())
-            put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, UUIDSerializer::class.java)
-            put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer::class.java)
-        },
-    ).use { producer ->
-        return producer.send(record).get()
     }
 }
