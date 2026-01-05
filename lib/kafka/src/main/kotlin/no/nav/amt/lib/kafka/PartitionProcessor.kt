@@ -44,14 +44,18 @@ internal class PartitionProcessor<K, V>(
      */
     suspend fun process(topicPartition: TopicPartition, records: List<ConsumerRecord<K, V>>) {
         for (record in records) {
-            try {
-                consume(record.key(), record.value())
+            val recordInfo = "topic=${record.topic()} key=${record.key()} " +
+                "partition=${record.partition()} offset=${record.offset()}"
 
+            try {
+                val start = System.currentTimeMillis()
+                consume(record.key(), record.value())
                 offsetManager.markProcessed(topicPartition, record.offset() + 1)
+                log.info("Consumed record in ${System.currentTimeMillis() - start} ms: $recordInfo")
             } catch (ce: CancellationException) {
                 throw ce
             } catch (t: Throwable) {
-                log.warn("Failed processing $topicPartition offset=${record.offset()}", t)
+                log.warn("Failed processing record: $recordInfo", t)
                 offsetManager.markRetry(topicPartition, record.offset())
                 backoffManager.incrementRetryCount(topicPartition)
                 break // stop on first failure in partition

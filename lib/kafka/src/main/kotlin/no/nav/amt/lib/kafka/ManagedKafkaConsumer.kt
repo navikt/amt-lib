@@ -144,6 +144,8 @@ class ManagedKafkaConsumer<K, V>(
         val records = consumer.poll(Duration.ofMillis(pollTimeoutMs))
         if (records.isEmpty) return
 
+        log.info("Consumer for $topic polled ${records.count()} records")
+
         records.partitions().forEach { topicPartition ->
             partitionProcessor.process(
                 topicPartition = topicPartition,

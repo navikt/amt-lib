@@ -1,6 +1,7 @@
 package no.nav.amt.lib.kafka
 
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.slf4j.LoggerFactory
 
 /**
  * Controls pausing and resuming of Kafka partitions based on backoff state.
@@ -13,6 +14,8 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 internal class PartitionPauseController(
     private val backoffManager: PartitionBackoffManager,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     /**
      * Updates the paused state of partitions in the given Kafka consumer.
      *
@@ -34,7 +37,17 @@ internal class PartitionPauseController(
         backoffPartitions
             .filterNot { it in paused }
             .takeIf { it.isNotEmpty() }
-            ?.let { consumer.pause(it) }
+            ?.let { topicPartitions ->
+                consumer.pause(topicPartitions)
+                topicPartitions.forEach { tp ->
+                    runCatching { consumer.position(tp) }
+                        .onSuccess { position ->
+                            log.warn("Partition $tp entering retry at next offset $position")
+                        }.onFailure {
+                            log.warn("Partition $tp entering retry, but position unavailable (rebalance in progress)")
+                        }
+                }
+            }
 
         // resume paused partitions that are no longer in backoff
         processable
