@@ -35,7 +35,7 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class ManagedKafkaConsumer<K, V>(
     private val topic: String,
-    private val config: Map<String, Any>,
+    private val config: Map<String, *>,
     private val pollTimeoutMs: Long = 1000L,
     consume: suspend (key: K, value: V) -> Unit,
 ) : Consumer<K, V> {
