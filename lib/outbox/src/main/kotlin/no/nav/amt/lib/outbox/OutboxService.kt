@@ -24,7 +24,7 @@ class OutboxService(
      * @param topic The Kafka topic to which the event will be published.
      * @return The created [OutboxRecord].
      */
-    fun <K : Any, V : Any> insertRecord(
+    suspend fun <K : Any, V : Any> insertRecord(
         key: K,
         value: V,
         topic: String,
@@ -44,14 +44,14 @@ class OutboxService(
      * @param limit The maximum number of events to return.
      * @return A list of unprocessed [OutboxRecord]s.
      */
-    fun findUnprocessedRecords(limit: Int): List<OutboxRecord> = repository.findUnprocessedRecords(limit)
+    suspend fun findUnprocessedRecords(limit: Int): List<OutboxRecord> = repository.findUnprocessedRecords(limit)
 
     /**
      * Marks an outbox record as processed.
      *
      * @param record The record to mark as processed.
      */
-    fun markAsProcessed(record: OutboxRecord) {
+    suspend fun markAsProcessed(record: OutboxRecord) {
         repository.markAsProcessed(record.id)
         meter.incrementProcessedRecords(record.topic, OutboxRecordStatus.PROCESSED)
     }
@@ -62,10 +62,10 @@ class OutboxService(
      * @param record The failed record.
      * @param errorMessage A message describing the reason for the failure.
      */
-    fun markAsFailed(record: OutboxRecord, errorMessage: String) {
+    suspend fun markAsFailed(record: OutboxRecord, errorMessage: String) {
         repository.markAsFailed(record.id, errorMessage)
         meter.incrementProcessedRecords(record.topic, OutboxRecordStatus.FAILED)
     }
 
-    fun getRecordsByTopicAndKey(topic: String, key: String): List<OutboxRecord> = repository.getRecordsByTopicAndKey(topic, key)
+    suspend fun getRecordsByTopicAndKey(topic: String, key: String): List<OutboxRecord> = repository.getRecordsByTopicAndKey(topic, key)
 }
