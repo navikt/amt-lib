@@ -21,7 +21,7 @@ internal class OutboxRepository {
         errorMessage = row.stringOrNull("error_message"),
     )
 
-    internal fun insertNewRecord(record: NewOutboxRecord) = Database.query {
+    internal suspend fun insertNewRecord(record: NewOutboxRecord) = Database.query {
         val sql =
             """
             insert into outbox_record (
@@ -59,7 +59,7 @@ internal class OutboxRepository {
             )
     }
 
-    fun findUnprocessedRecords(limit: Int): List<OutboxRecord> = Database.query {
+    suspend fun findUnprocessedRecords(limit: Int): List<OutboxRecord> = Database.query {
         val sql =
             """
             select * from outbox_record
@@ -73,7 +73,7 @@ internal class OutboxRepository {
         it.list(queryOf(sql, params), this::rowmapper)
     }
 
-    fun markAsProcessed(recordId: OutboxRecordId) = Database.query {
+    suspend fun markAsProcessed(recordId: OutboxRecordId) = Database.query {
         val sql =
             """
             update outbox_record
@@ -90,7 +90,7 @@ internal class OutboxRepository {
         it.update(queryOf(sql, params))
     }
 
-    fun markAsFailed(recordId: OutboxRecordId, errorMessage: String) = Database.query {
+    suspend fun markAsFailed(recordId: OutboxRecordId, errorMessage: String) = Database.query {
         val sql =
             """
             update outbox_record
@@ -110,13 +110,13 @@ internal class OutboxRepository {
         it.update(queryOf(sql, params))
     }
 
-    fun get(id: OutboxRecordId): OutboxRecord? = Database.query {
+    suspend fun get(id: OutboxRecordId): OutboxRecord? = Database.query {
         val sql = "select * from outbox_record where id = :id"
         val params = mapOf("id" to id.value)
         it.single(queryOf(sql, params), this::rowmapper)
     }
 
-    fun getRecordsByTopicAndKey(topic: String, key: String) = Database.query {
+    suspend fun getRecordsByTopicAndKey(topic: String, key: String) = Database.query {
         val sql = "select * from outbox_record where key = :key and topic = :topic"
         val params = mapOf("key" to key, "topic" to topic)
         it.list(queryOf(sql, params), this::rowmapper)

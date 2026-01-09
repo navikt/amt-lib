@@ -2,17 +2,19 @@ package no.nav.amt.lib.outbox
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlinx.coroutines.runBlocking
 import no.nav.amt.lib.testing.SingletonPostgres16Container
 import no.nav.amt.lib.utils.objectMapper
 import kotlin.test.Test
 
 class OutboxRepositoryTest {
     init {
+        @Suppress("UnusedExpression")
         SingletonPostgres16Container
     }
 
     @Test
-    fun `test outbox repository`() {
+    fun `test outbox repository`(): Unit = runBlocking {
         val repo = OutboxRepository()
         val record = NewOutboxRecord(
             key = "test-key",
@@ -27,7 +29,7 @@ class OutboxRepositoryTest {
     }
 
     @Test
-    fun `findUnprocessedRecords returns pending and failed records`() {
+    fun `findUnprocessedRecords returns pending and failed records`(): Unit = runBlocking {
         val repo = OutboxRepository()
         val pendingRecord = NewOutboxRecord(
             key = "key-1",
@@ -57,7 +59,7 @@ class OutboxRepositoryTest {
     }
 
     @Test
-    fun `markAsProcessed updates record status and processedAt`() {
+    fun `markAsProcessed updates record status and processedAt`(): Unit = runBlocking {
         val repo = OutboxRepository()
         val record = NewOutboxRecord(
             key = "key-4",
@@ -73,7 +75,7 @@ class OutboxRepositoryTest {
     }
 
     @Test
-    fun `markAsFailed updates record status, error message, and retry count`() {
+    fun `markAsFailed updates record status, error message, and retry count`(): Unit = runBlocking {
         val repo = OutboxRepository()
         val record = NewOutboxRecord(
             key = "key-5",
