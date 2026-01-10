@@ -1,6 +1,5 @@
 package no.nav.amt.lib.testing
 
-import kotlinx.coroutines.runBlocking
 import kotliquery.queryOf
 import no.nav.amt.lib.testing.utils.ContainerReuseConfig
 import no.nav.amt.lib.utils.database.Database
@@ -23,6 +22,10 @@ object SingletonPostgresContainer {
     private var postgresContainer: PostgreSQLContainer? = null
 
     private val reuseConfig = ContainerReuseConfig()
+
+    fun start() {
+        start("postgres:17-alpine")
+    }
 
     internal fun startWithImage(version: String) {
         start(version)
@@ -85,20 +88,18 @@ object SingletonPostgresContainer {
         )
     }
 
-    fun cleanup() = runBlocking {
-        Database.query { session ->
-            val tables = session
-                .run(
-                    queryOf("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
-                        .map { it.string("table_name") }
-                        .asList,
-                )
+    fun cleanup() = Database.query {
+        val tables = it
+            .run(
+                queryOf("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+                    .map { it.string("table_name") }
+                    .asList,
+            )
 
-            session.transaction { tx ->
-                tables.forEach { table ->
-                    log.info("Dropping table $table...")
-                    tx.run(queryOf("drop table $table cascade").asExecute)
-                }
+        it.transaction { tx ->
+            tables.forEach { table ->
+                log.info("Dropping table $table...")
+                tx.run(queryOf("drop table $table cascade").asExecute)
             }
         }
     }

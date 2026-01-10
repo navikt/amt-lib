@@ -42,7 +42,7 @@ class OutboxProcessor(
         }
     }
 
-    internal suspend fun processRecords() {
+    internal fun processRecords() {
         try {
             val unprocessedRecords = service.findUnprocessedRecords(100)
             if (unprocessedRecords.isEmpty()) {
@@ -72,7 +72,7 @@ class OutboxProcessor(
         }
     }
 
-    private suspend fun process(record: OutboxRecord) {
+    private fun process(record: OutboxRecord) {
         producer.produce(
             topic = record.topic,
             key = record.key,

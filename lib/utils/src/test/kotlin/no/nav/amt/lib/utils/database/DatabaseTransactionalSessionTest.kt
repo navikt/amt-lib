@@ -1,36 +1,34 @@
 package no.nav.amt.lib.utils.database
 
-import io.kotest.matchers.nulls.shouldBeNull
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotliquery.TransactionalSession
 import no.nav.amt.lib.testing.SingletonPostgres16Container
-import no.nav.amt.lib.utils.database.Database.TxContext
-import no.nav.amt.lib.utils.database.Database.withTransaction
 import org.junit.jupiter.api.Test
 
 class DatabaseTransactionalSessionTest {
     init {
-        @Suppress("UnusedExpression")
         SingletonPostgres16Container
     }
 
     @Test
-    fun `transactionalSession skal vare null uten en transaksjonsblokk`() = runTest {
-        currentCoroutineContext()[TxContext].shouldBeNull()
+    fun `transactionalSession skal være null uten en transaksjonsblokk`() {
+        Database.transactionalSession shouldBe null
     }
 
     @Test
-    fun `transactionalSession skal ikke vare null i en transaksjonsblokk og fjernes etter blokken`() = runTest {
-        withTransaction {
-            currentCoroutineContext()[TxContext].shouldNotBeNull()
+    fun `transactionalSession skal ikke være null i en transaksjonsblokk og fjernes etter blokken`() = runTest {
+        var insideSession: TransactionalSession?
+        Database.transaction {
+            insideSession = Database.transactionalSession
+            insideSession shouldNotBe null
         }
-        currentCoroutineContext()[TxContext].shouldBeNull()
+        Database.transactionalSession shouldBe null
     }
 
     @Test
@@ -38,11 +36,11 @@ class DatabaseTransactionalSessionTest {
         var firstSession: TransactionalSession? = null
         var secondSession: TransactionalSession? = null
 
-        withTransaction {
-            firstSession = Database.currentTransactionalSession()
+        Database.transaction {
+            firstSession = Database.transactionalSession
         }
-        withTransaction {
-            secondSession = Database.currentTransactionalSession()
+        Database.transaction {
+            secondSession = Database.transactionalSession
         }
 
         firstSession shouldNotBe null
@@ -51,34 +49,21 @@ class DatabaseTransactionalSessionTest {
     }
 
     @Test
-    fun `TxContext propagerer til child coroutines`() = runTest {
-        var innerTxSession: TransactionalSession? = null
+    fun `sessions skal ikke gjenbrukes på tvers av coroutines og skal lukkes etter ferdig bruk`(): Unit = runBlocking {
+        val sessions = mutableListOf<TransactionalSession?>()
+        val maxConnectionPoolSize = 10
 
-        withTransaction {
-            val parentContext = coroutineContext
-            val txContext = currentCoroutineContext()[TxContext]!!
-
-            launch(parentContext + txContext) {
-                innerTxSession = Database.currentTransactionalSession()
-            }.join()
-
-            innerTxSession shouldBe Database.currentTransactionalSession()
-        }
-    }
-
-    @Test
-    fun `concurrent transaksjoner gir separate sessions`() = runTest {
-        val sessions = mutableSetOf<TransactionalSession>()
-
-        val jobs = List(10) {
+        val jobs = List(maxConnectionPoolSize + 1) {
             launch {
-                withTransaction {
-                    sessions.add(Database.currentTransactionalSession())
+                delay(1000)
+                Database.transaction {
+                    sessions.add(Database.transactionalSession)
                 }
             }
         }
         jobs.joinAll()
 
-        sessions.size shouldBe 10
+        sessions.forEach { it shouldNotBe null }
+        sessions.toSet().size shouldBe maxConnectionPoolSize + 1
     }
 }
