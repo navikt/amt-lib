@@ -15,7 +15,7 @@ object Database {
     private val transactionalSessionThreadLocal = ThreadLocal<TransactionalSession?>()
     internal val transactionalSession get() = transactionalSessionThreadLocal.get()
 
-    fun init(config: DatabaseConfig, useHikariSettingsForLegacyTransactions: Boolean = false) {
+    fun init(config: DatabaseConfig) {
         dataSource = HikariDataSource().apply {
             if (config.jdbcURL.isNotEmpty()) {
                 jdbcUrl = config.jdbcURL
@@ -28,16 +28,9 @@ object Database {
                 addDataSourceProperty("password", config.dbPassword)
             }
 
+            maximumPoolSize = 20
             minimumIdle = 1
             leakDetectionThreshold = 10_000
-
-            // for bruk med transaction under som er deprikert
-            if (useHikariSettingsForLegacyTransactions) {
-                maximumPoolSize = 10
-                idleTimeout = 10_001
-                connectionTimeout = 1_000
-                maxLifetime = 1001
-            }
         }
 
         runMigration()
@@ -61,8 +54,8 @@ object Database {
      * @param block Kode som skal kjøres i transaksjon
      * @return Resultatet fra blokken
      * @throws IllegalStateException hvis funksjonen kalles mens en annen transaksjon er aktiv
+     * @throws [org.postgresql.util.PSQLException] hvis en utilsiktet prøver å committe direkte via session.transaction innenfor aktiv transaksjon
      */
-    @Deprecated("Bruk kotliquery.transaction fordi denne metoden krever spesielt oppsett av HikariDataSource")
     suspend fun <A> transaction(block: suspend () -> A): A {
         check(transactionalSession == null) { "Nested transactions are not supported" }
 

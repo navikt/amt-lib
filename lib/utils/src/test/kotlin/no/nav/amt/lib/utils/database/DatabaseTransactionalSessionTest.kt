@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 
 class DatabaseTransactionalSessionTest {
     init {
+        @Suppress("UnusedExpression")
         SingletonPostgres16Container
     }
 
