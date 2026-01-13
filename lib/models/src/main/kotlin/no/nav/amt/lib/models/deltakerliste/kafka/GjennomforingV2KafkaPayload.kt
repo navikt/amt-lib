@@ -34,6 +34,32 @@ sealed class GjennomforingV2KafkaPayload {
     @get:JsonIgnore
     abstract val gjennomforingType: GjennomforingType
 
+    fun assertPameldingstypeIsValid() {
+        when {
+            tiltakskode in direktetiltak -> {
+                require(pameldingType == GjennomforingPameldingType.DIREKTE_VEDTAK) {
+                    "$tiltakskode krever DIREKTE_VEDTAK"
+                }
+            }
+
+            this is Gruppe &&
+                tiltakskode in gruppetiltak &&
+                oppstart == Oppstartstype.FELLES -> {
+                require(pameldingType == GjennomforingPameldingType.TRENGER_GODKJENNING) {
+                    "FELLES oppstart for $tiltakskode krever TRENGER_GODKJENNING"
+                }
+            }
+
+            this is Gruppe &&
+                tiltakskode in gruppetiltak &&
+                oppstart == Oppstartstype.LOPENDE -> {
+                require(pameldingType == GjennomforingPameldingType.DIREKTE_VEDTAK) {
+                    "LOPENDE oppstart for $tiltakskode krever DIREKTE_VEDTAK"
+                }
+            }
+        }
+    }
+
     data class Arrangor(
         val organisasjonsnummer: String,
     )
@@ -76,5 +102,20 @@ sealed class GjennomforingV2KafkaPayload {
     companion object {
         const val GRUPPE_V2_TYPE = "TiltaksgjennomforingV2.Gruppe"
         const val ENKELTPLASS_V2_TYPE = "TiltaksgjennomforingV2.Enkeltplass"
+
+        val direktetiltak = setOf(
+            Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
+            Tiltakskode.ARBEIDSRETTET_REHABILITERING,
+            Tiltakskode.AVKLARING,
+            Tiltakskode.DIGITALT_OPPFOLGINGSTILTAK,
+            Tiltakskode.OPPFOLGING,
+            Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET,
+        )
+
+        val gruppetiltak = setOf(
+            Tiltakskode.GRUPPE_ARBEIDSMARKEDSOPPLAERING,
+            Tiltakskode.GRUPPE_FAG_OG_YRKESOPPLAERING,
+            Tiltakskode.JOBBKLUBB,
+        )
     }
 }
