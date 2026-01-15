@@ -60,6 +60,7 @@ enum class Tiltakskode {
         NORSKOPPLAERING_GRUNNLEGGENDE_FERDIGHETER_FOV,
         STUDIESPESIALISERING,
         FAG_OG_YRKESOPPLAERING,
+        HOYERE_YRKESFAGLIG_UTDANNING
     )
 
     @Deprecated("Denne skal antakelig erstattes av lokalt tilpassede versjoner")
