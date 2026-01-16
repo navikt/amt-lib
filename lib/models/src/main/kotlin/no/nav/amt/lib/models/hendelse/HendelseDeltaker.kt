@@ -1,5 +1,6 @@
 package no.nav.amt.lib.models.hendelse
 
+import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.time.LocalDate
 import java.util.UUID
@@ -19,6 +20,7 @@ data class HendelseDeltaker(
         val startdato: LocalDate? = null, // Må være nullable fordi de benyttes som dbo i amt-distribusjon
         val sluttdato: LocalDate? = null,
         val oppstartstype: Oppstartstype? = null, // Må være nullable fordi de benyttes som dbo i amt-distribusjon
+        val pameldingstype: GjennomforingPameldingType? = null,
         val oppmoteSted: String? = null,
     ) {
         data class Arrangor(
