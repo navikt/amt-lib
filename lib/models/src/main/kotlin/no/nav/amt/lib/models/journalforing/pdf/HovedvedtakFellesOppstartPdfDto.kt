@@ -14,7 +14,8 @@ data class HovedvedtakFellesOppstartPdfDto(
         val mellomnavn: String?,
         val etternavn: String,
         val personident: String,
-    )
+        val innholdBeskrivelse: String?,
+        )
 
     data class DeltakerlisteDto(
         val tiltakskode: Tiltakskode,
