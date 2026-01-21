@@ -19,6 +19,7 @@ data class LargeValue(
 
 class OutboxServiceTest {
     init {
+        @Suppress("UnusedExpression")
         SingletonPostgres16Container
     }
 

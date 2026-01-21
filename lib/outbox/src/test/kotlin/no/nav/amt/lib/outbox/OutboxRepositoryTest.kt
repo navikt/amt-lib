@@ -8,6 +8,7 @@ import kotlin.test.Test
 
 class OutboxRepositoryTest {
     init {
+        @Suppress("UnusedExpression")
         SingletonPostgres16Container
     }
 

@@ -7,24 +7,10 @@ import no.nav.amt.lib.utils.objectMapper
 import org.postgresql.util.PGobject
 
 internal class OutboxRepository {
-    private fun rowmapper(row: Row) = OutboxRecord(
-        id = OutboxRecordId(row.long("id")),
-        key = row.string("key"),
-        value = objectMapper.readTree(row.string("value")),
-        valueType = row.string("value_type"),
-        topic = row.string("topic"),
-        createdAt = row.localDateTime("created_at"),
-        processedAt = row.localDateTimeOrNull("processed_at"),
-        status = OutboxRecordStatus.valueOf(row.string("status")),
-        retryCount = row.int("retry_count"),
-        retriedAt = row.localDateTimeOrNull("retried_at"),
-        errorMessage = row.stringOrNull("error_message"),
-    )
-
-    internal fun insertNewRecord(record: NewOutboxRecord) = Database.query {
+    internal fun insertNewRecord(record: NewOutboxRecord): OutboxRecord {
         val sql =
             """
-            insert into outbox_record (
+            INSERT INTO outbox_record (
                 key, 
                 value, 
                 value_type, 
@@ -32,7 +18,7 @@ internal class OutboxRepository {
                 status, 
                 retry_count
             )
-            values (
+            VALUES (
                 :key, 
                 :value, 
                 :value_type, 
@@ -40,7 +26,7 @@ internal class OutboxRepository {
                 :status, 
                 :retry_count 
             )
-            returning *
+            RETURNING *
             """.trimIndent()
 
         val params = mapOf(
@@ -52,54 +38,62 @@ internal class OutboxRepository {
             "retry_count" to 0,
         )
 
-        it.single(queryOf(sql, params), this::rowmapper)
-            ?: throw NoSuchElementException(
+        return Database.query { session ->
+            session.single(
+                queryOf(sql, params),
+                ::rowMapper,
+            ) ?: throw NoSuchElementException(
                 "Failed to insert OutboxRecord for key: ${record.key}, " +
                     "valueType: ${record.valueType} and topic: ${record.topic}",
             )
+        }
     }
 
-    fun findUnprocessedRecords(limit: Int): List<OutboxRecord> = Database.query {
+    fun findUnprocessedRecords(limit: Int): List<OutboxRecord> {
         val sql =
             """
-            select * from outbox_record
-            where status = '${OutboxRecordStatus.PENDING.name}' or status = '${OutboxRecordStatus.FAILED.name}'
-            order by created_at asc
-            limit :limit
+            SELECT * 
+            FROM outbox_record
+            WHERE status IN ('${OutboxRecordStatus.PENDING.name}', '${OutboxRecordStatus.FAILED.name}')
+            ORDER BY created_at
+            LIMIT :limit
             """.trimIndent()
 
-        val params = mapOf("limit" to limit)
-
-        it.list(queryOf(sql, params), this::rowmapper)
+        return Database.query { session ->
+            session.list(
+                queryOf(sql, mapOf("limit" to limit)),
+                ::rowMapper,
+            )
+        }
     }
 
-    fun markAsProcessed(recordId: OutboxRecordId) = Database.query {
+    fun markAsProcessed(recordId: OutboxRecordId) {
         val sql =
             """
-            update outbox_record
-            set processed_at = current_timestamp, 
+            UPDATE outbox_record
+            SET 
+                processed_at = CURRENT_TIMESTAMP, 
                 status = '${OutboxRecordStatus.PROCESSED.name}',
-                modified_at = current_timestamp
-            where id = :id
+                modified_at = CURRENT_TIMESTAMP
+            WHERE id = :id
             """.trimIndent()
 
-        val params = mapOf(
-            "id" to recordId.value,
-        )
-
-        it.update(queryOf(sql, params))
+        Database.query { session ->
+            session.update(queryOf(sql, mapOf("id" to recordId.value)))
+        }
     }
 
-    fun markAsFailed(recordId: OutboxRecordId, errorMessage: String) = Database.query {
+    fun markAsFailed(recordId: OutboxRecordId, errorMessage: String) {
         val sql =
             """
-            update outbox_record
-            set status = '${OutboxRecordStatus.FAILED.name}', 
+            UPDATE outbox_record
+            SET 
+                status = '${OutboxRecordStatus.FAILED.name}', 
                 error_message = :error_message, 
                 retry_count = retry_count + 1,
-                modified_at = current_timestamp,
-                retried_at = current_timestamp
-            where id = :id
+                modified_at = CURRENT_TIMESTAMP,
+                retried_at = CURRENT_TIMESTAMP
+            WHERE id = :id
             """.trimIndent()
 
         val params = mapOf(
@@ -107,23 +101,49 @@ internal class OutboxRepository {
             "error_message" to errorMessage,
         )
 
-        it.update(queryOf(sql, params))
+        Database.query { session ->
+            session.update(queryOf(sql, params))
+        }
     }
 
-    fun get(id: OutboxRecordId): OutboxRecord? = Database.query {
-        val sql = "select * from outbox_record where id = :id"
-        val params = mapOf("id" to id.value)
-        it.single(queryOf(sql, params), this::rowmapper)
+    fun get(id: OutboxRecordId): OutboxRecord? = Database.query { session ->
+        session.single(
+            queryOf(
+                "SELECT * FROM outbox_record WHERE id = :id",
+                mapOf("id" to id.value),
+            ),
+            ::rowMapper,
+        )
     }
 
-    fun getRecordsByTopicAndKey(topic: String, key: String) = Database.query {
-        val sql = "select * from outbox_record where key = :key and topic = :topic"
-        val params = mapOf("key" to key, "topic" to topic)
-        it.list(queryOf(sql, params), this::rowmapper)
+    fun getRecordsByTopicAndKey(topic: String, key: String) = Database.query { session ->
+        session.list(
+            queryOf(
+                "SELECT * FROM outbox_record WHERE key = :key AND topic = :topic",
+                mapOf("key" to key, "topic" to topic),
+            ),
+            ::rowMapper,
+        )
     }
-}
 
-private fun toPGObject(value: Any?) = PGobject().also {
-    it.type = "json"
-    it.value = value?.let { v -> objectMapper.writeValueAsString(v) }
+    companion object {
+        private fun toPGObject(value: Any?) = PGobject().also {
+            it.type = "json"
+            it.value = value?.let { v -> objectMapper.writeValueAsString(v) }
+        }
+
+        private fun rowMapper(row: Row) = OutboxRecord(
+            id = OutboxRecordId(row.long("id")),
+            key = row.string("key"),
+            value = objectMapper.readTree(row.string("value")),
+            valueType = row.string("value_type"),
+            topic = row.string("topic"),
+            createdAt = row.localDateTime("created_at"),
+            processedAt = row.localDateTimeOrNull("processed_at"),
+            status = OutboxRecordStatus.valueOf(row.string("status")),
+            retryCount = row.int("retry_count"),
+            retriedAt = row.localDateTimeOrNull("retried_at"),
+            errorMessage = row.stringOrNull("error_message"),
+        )
+    }
 }

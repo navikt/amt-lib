@@ -1,5 +1,6 @@
 package no.nav.amt.lib.outbox
 
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.prometheus.metrics.model.registry.PrometheusRegistry
 import no.nav.amt.lib.kafka.Producer
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.UUID
 
+@Suppress("UnusedExpression")
 class OutboxProcessorTest {
     init {
         SingletonPostgres16Container
@@ -26,8 +28,8 @@ class OutboxProcessorTest {
     private val outboxRepository = OutboxRepository()
     private val outboxService = OutboxService(PrometheusOutboxMeter(prometheusRegistry))
 
-    private val kafakConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
-    private val kafkaProducer = Producer<String, String>(kafakConfig)
+    private val kafkaConfig = LocalKafkaConfig(SingletonKafkaProvider.getHost())
+    private val kafkaProducer = Producer<String, String>(kafkaConfig)
 
     private val outboxProcessor = OutboxProcessor(
         service = outboxService,
@@ -44,7 +46,10 @@ class OutboxProcessorTest {
         outboxProcessor.processRecords()
 
         val processedRecord = outboxRepository.get(record.id)!!
-        processedRecord.processedAt!! shouldBeCloseTo LocalDateTime.now()
+
+        processedRecord.processedAt.shouldNotBeNull()
+        processedRecord.processedAt shouldBeCloseTo LocalDateTime.now()
+
         processedRecord.status shouldBe OutboxRecordStatus.PROCESSED
         verifyProducedRecord(record)
     }
