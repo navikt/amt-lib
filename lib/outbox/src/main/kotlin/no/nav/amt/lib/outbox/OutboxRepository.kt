@@ -1,12 +1,16 @@
 package no.nav.amt.lib.outbox
 
 import kotliquery.Row
+import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import no.nav.amt.lib.utils.database.Database
 import no.nav.amt.lib.utils.objectMapper
 import org.postgresql.util.PGobject
+import org.slf4j.LoggerFactory
 
 internal class OutboxRepository {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     internal fun insertNewRecord(record: NewOutboxRecord): OutboxRecord {
         val sql =
             """
@@ -39,6 +43,10 @@ internal class OutboxRepository {
         )
 
         return Database.query { session ->
+            if (session !is TransactionalSession) {
+                log.warn("OutboxRepository.insertNewRecord called outside of transaction. Topic: ${record.topic}, key: ${record.key}")
+            }
+
             session.single(
                 queryOf(sql, params),
                 ::rowMapper,
