@@ -28,14 +28,17 @@ class OutboxService(
         key: K,
         value: V,
         topic: String,
+        suppressOutsideTxWarning: Boolean = false,
     ): OutboxRecord {
-        val event = NewOutboxRecord(
+        val outboxRecord = NewOutboxRecord(
             key = key.toString(),
             valueType = value::class.java.simpleName,
             topic = topic,
             value = objectMapper.readTree(objectMapper.writeValueAsString(value)),
         )
-        return repository.insertNewRecord(event).also { meter.incrementNewRecords(topic) }
+        return repository
+            .insertNewRecord(outboxRecord, suppressOutsideTxWarning)
+            .also { meter.incrementNewRecords(topic) }
     }
 
     /**

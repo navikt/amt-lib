@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 internal class OutboxRepository {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    internal fun insertNewRecord(record: NewOutboxRecord): OutboxRecord {
+    internal fun insertNewRecord(record: NewOutboxRecord, suppressOutsideTxWarning: Boolean = true): OutboxRecord {
         val sql =
             """
             INSERT INTO outbox_record (
@@ -43,7 +43,7 @@ internal class OutboxRepository {
         )
 
         return Database.query { session ->
-            if (session !is TransactionalSession) {
+            if (!(suppressOutsideTxWarning || session is TransactionalSession)) {
                 log.warn("OutboxRepository.insertNewRecord called outside of transaction. Topic: ${record.topic}, key: ${record.key}")
             }
 
