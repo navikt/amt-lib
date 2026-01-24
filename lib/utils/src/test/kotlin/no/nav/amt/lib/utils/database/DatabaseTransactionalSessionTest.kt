@@ -8,13 +8,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotliquery.TransactionalSession
-import no.nav.amt.lib.testing.SingletonPostgres16Container
+import no.nav.amt.lib.testing.TestPostgresContainer
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class DatabaseTransactionalSessionTest {
-    init {
-        @Suppress("UnusedExpression")
-        SingletonPostgres16Container
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setupAll() = TestPostgresContainer.bootstrap()
     }
 
     @Test

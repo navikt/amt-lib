@@ -9,19 +9,20 @@ import no.nav.amt.lib.outbox.metrics.PrometheusOutboxMeter
 import no.nav.amt.lib.outbox.utils.assertProduced
 import no.nav.amt.lib.testing.AsyncUtils
 import no.nav.amt.lib.testing.SingletonKafkaProvider
-import no.nav.amt.lib.testing.SingletonPostgres16Container
+import no.nav.amt.lib.testing.TestPostgresContainer
 import no.nav.amt.lib.testing.shouldBeCloseTo
 import no.nav.amt.lib.utils.job.JobManager
 import no.nav.amt.lib.utils.objectMapper
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.UUID
 
-@Suppress("UnusedExpression")
 class OutboxProcessorTest {
-    init {
-        SingletonPostgres16Container
-        SingletonKafkaProvider.start()
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setupAll() = TestPostgresContainer.bootstrap()
     }
 
     private val prometheusRegistry = PrometheusRegistry()

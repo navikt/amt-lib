@@ -3,18 +3,19 @@ package no.nav.amt.lib.utils.database
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
-import no.nav.amt.lib.testing.SingletonPostgres16Container
+import no.nav.amt.lib.testing.TestPostgresContainer
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.postgresql.util.PSQLException
 
 class DatabaseTest {
-    private var testRepository: DatabaseTestRepository
+    private val testRepository = DatabaseTestRepository()
 
-    init {
-        @Suppress("UnusedExpression")
-        SingletonPostgres16Container
-        testRepository = DatabaseTestRepository()
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setupAll() = TestPostgresContainer.bootstrap()
     }
 
     @BeforeEach

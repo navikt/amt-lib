@@ -2,14 +2,16 @@ package no.nav.amt.lib.outbox
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import no.nav.amt.lib.testing.SingletonPostgres16Container
+import no.nav.amt.lib.testing.TestPostgresContainer
 import no.nav.amt.lib.utils.objectMapper
+import org.junit.jupiter.api.BeforeAll
 import kotlin.test.Test
 
 class OutboxRepositoryTest {
-    init {
-        @Suppress("UnusedExpression")
-        SingletonPostgres16Container
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setupAll() = TestPostgresContainer.bootstrap()
     }
 
     @Test

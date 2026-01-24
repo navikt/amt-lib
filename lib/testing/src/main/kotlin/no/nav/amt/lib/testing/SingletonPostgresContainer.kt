@@ -10,12 +10,14 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.postgresql.PostgreSQLContainer.POSTGRESQL_PORT
 import org.testcontainers.utility.DockerImageName
 
+@Deprecated("Use TestPostgresContainer instead")
 object SingletonPostgres16Container {
     init {
         SingletonPostgresContainer.startWithImage("postgres:16-alpine")
     }
 }
 
+@Deprecated("Use TestPostgresContainer instead")
 object SingletonPostgresContainer {
     private val log = LoggerFactory.getLogger(javaClass)
 

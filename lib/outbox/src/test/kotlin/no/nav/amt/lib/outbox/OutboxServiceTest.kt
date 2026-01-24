@@ -4,7 +4,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.prometheus.metrics.model.registry.PrometheusRegistry
 import no.nav.amt.lib.outbox.metrics.PrometheusOutboxMeter
-import no.nav.amt.lib.testing.SingletonPostgres16Container
+import no.nav.amt.lib.testing.TestPostgresContainer
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -18,9 +19,10 @@ data class LargeValue(
 )
 
 class OutboxServiceTest {
-    init {
-        @Suppress("UnusedExpression")
-        SingletonPostgres16Container
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setupAll() = TestPostgresContainer.bootstrap()
     }
 
     private val prometheusRegistry = PrometheusRegistry()
