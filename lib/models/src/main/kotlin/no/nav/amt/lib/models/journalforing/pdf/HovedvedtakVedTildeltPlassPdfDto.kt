@@ -29,6 +29,7 @@ data class HovedvedtakVedTildeltPlassPdfDto(
         val arrangor: ArrangorDto,
         val oppmoteSted: String?,
         val harKursetStartet: Boolean?,
+        val harKlagerett: Boolean
     )
 
     data class AvsenderDto(
