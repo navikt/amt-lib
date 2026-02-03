@@ -3,7 +3,7 @@ package no.nav.amt.lib.models.journalforing.pdf
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.time.LocalDate
 
-data class HovedvedtakFellesOppstartPdfDto(
+data class HovedvedtakVedTildeltPlassPdfDto(
     val deltaker: DeltakerDto,
     val deltakerliste: DeltakerlisteDto,
     val avsender: AvsenderDto,
@@ -14,6 +14,7 @@ data class HovedvedtakFellesOppstartPdfDto(
         val mellomnavn: String?,
         val etternavn: String,
         val personident: String,
+        val innhold: InnholdPdfDto?,
         val innholdBeskrivelse: String?,
         )
 

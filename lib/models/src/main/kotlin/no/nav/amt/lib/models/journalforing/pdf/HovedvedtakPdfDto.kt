@@ -18,8 +18,9 @@ data class HovedvedtakPdfDto(
         val mellomnavn: String?,
         val etternavn: String,
         val personident: String,
-        val innhold: List<String>,
-        val innholdBeskrivelse: String?,
+        val innholdV2: InnholdPdfDto?,
+        val innhold: List<String>, //skal fjernes
+        val innholdBeskrivelse: String?, //skal fjernes
         val bakgrunnsinformasjon: String?,
         val deltakelsesmengdeTekst: String?,
         val adresseDelesMedArrangor: Boolean,
