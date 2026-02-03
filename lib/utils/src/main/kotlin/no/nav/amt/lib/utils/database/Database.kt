@@ -43,20 +43,17 @@ object Database {
     }
 
     /**
-     * Kjør en suspenderende kodeblokk innenfor en database-transaksjon.
+     * Kjør synkron kode innenfor en database-transaksjon.
      *
-     * Transaksjonen fullføres automatisk, og alle kall av `Database.query {}` innenfor blokken
-     * kjøres i samme transaksjon. Det er ikke tillatt med nøstede transaksjoner.
-     *
-     * Funksjonen skal være trygg å bruke i coroutines,
-     * og sørger for isolasjon av transaksjoner per coroutine.
+     * Blokken må ikke suspendere eller bytte coroutine dispatcher.
+     * Transaksjonen er tråd-bundet og basert på JDBC.
      *
      * @param block Kode som skal kjøres i transaksjon
      * @return Resultatet fra blokken
      * @throws IllegalStateException hvis funksjonen kalles mens en annen transaksjon er aktiv
      * @throws [org.postgresql.util.PSQLException] hvis en utilsiktet prøver å committe direkte via session.transaction innenfor aktiv transaksjon
      */
-    suspend fun <A> transaction(block: suspend () -> A): A {
+    suspend fun <T> transaction(block: () -> T): T {
         check(transactionalSession == null) { "Nested transactions are not supported" }
 
         return sessionOf(dataSource).use { session ->
