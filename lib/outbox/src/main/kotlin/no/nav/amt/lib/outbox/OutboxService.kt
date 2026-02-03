@@ -34,7 +34,7 @@ class OutboxService(
             key = key.toString(),
             valueType = value::class.java.simpleName,
             topic = topic,
-            value = objectMapper.readTree(objectMapper.writeValueAsString(value)),
+            value = objectMapper.valueToTree(value),
         )
         return repository
             .insertNewRecord(outboxRecord, suppressOutsideTxWarning)

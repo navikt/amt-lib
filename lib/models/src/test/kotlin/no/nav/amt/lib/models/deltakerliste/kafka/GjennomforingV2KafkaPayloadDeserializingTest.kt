@@ -1,5 +1,6 @@
 package no.nav.amt.lib.models.deltakerliste.kafka
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -19,8 +20,8 @@ class GjennomforingV2KafkaPayloadDeserializingTest {
     @Test
     fun `inneholder type ved serialisering`() {
         val payload = objectMapper.readValue<GjennomforingV2KafkaPayload>(gruppeJson)
-        val serialized = objectMapper.writeValueAsString(payload)
-        objectMapper.readTree(serialized) shouldBe objectMapper.readTree(gruppeJson)
+        val serialized: JsonNode = objectMapper.valueToTree(payload)
+        serialized shouldBe objectMapper.readTree(gruppeJson)
     }
 
     @Test

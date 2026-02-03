@@ -7,6 +7,7 @@ dependencies {
     implementation("at.yawk.lz4:lz4-java:1.10.2") // fjernes ved neste release av org.apache.kafka:kafka-clients
     implementation(project(":lib:models"))
     implementation(project(":lib:utils"))
+    implementation(project(":lib:outbox"))
 
     implementation(libs.kafka.clients)
     implementation(libs.kotlinx.coroutines.core)
