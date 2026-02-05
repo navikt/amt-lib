@@ -16,7 +16,8 @@ data class InnsokingsbrevPdfDto(
         val mellomnavn: String?,
         val etternavn: String,
         val personident: String,
-        val innholdBeskrivelse: String?,
+        val innholdBeskrivelse: String?, //fases ut
+        val innhold: InnholdPdfDto?
         )
 
     data class DeltakerlisteDto(
