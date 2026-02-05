@@ -118,8 +118,7 @@ sealed interface EndringDto {
     ) : EndringDto
 
     data class EndreInnhold(
-        val innhold: List<String>,
-        val innholdBeskrivelse: String?,
+        val innhold: InnholdPdfDto,
         override val tittel: String = "Innholdet er endret",
     ) : EndringDto
 
