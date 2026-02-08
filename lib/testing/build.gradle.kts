@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.flyway.postgres)
     implementation(libs.kotliquery)
     api(libs.caffeine)
+    api(libs.junit.jupiter.params)
 
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.junit.jupiter.engine)

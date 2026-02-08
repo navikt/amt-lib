@@ -2,7 +2,7 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-junit-jupiter-engine = "6.0.2"
+jupiter-version = "6.0.2"
 kotest-version = "6.1.1"
 kafka-clients-version = "4.1.1"
 kotlinx-version = "1.10.2"
@@ -21,8 +21,8 @@ caffeine-version = "3.2.3"
 mockk-version = "1.14.9"
 
 [libraries]
-junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter-engine" }
-junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-jupiter-engine" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "jupiter-version" }
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "jupiter-version" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core-jvm", version.ref = "kotest-version" }
 kotest-assertions-json = { module = "io.kotest:kotest-assertions-json-jvm", version.ref = "kotest-version" }
 kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5" }

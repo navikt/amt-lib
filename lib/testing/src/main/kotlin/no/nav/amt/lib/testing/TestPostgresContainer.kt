@@ -1,5 +1,6 @@
 package no.nav.amt.lib.testing
 
+import kotliquery.queryOf
 import no.nav.amt.lib.utils.database.Database
 import no.nav.amt.lib.utils.database.DatabaseConfig
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
@@ -17,6 +18,29 @@ object TestPostgresContainer {
             initDatabase()
             dbInitialized = true
         }
+    }
+
+    fun truncateAllTables() {
+        val sql =
+            """
+            DO $$
+            DECLARE r RECORD;
+            
+            BEGIN
+                FOR r IN (
+                    SELECT tablename
+                    FROM pg_tables
+                    WHERE 
+                        schemaname = 'public'
+                        AND tablename NOT IN ('flyway_schema_history', 'outbox_record')
+                ) 
+                LOOP
+                    EXECUTE format('TRUNCATE TABLE %I CASCADE', r.tablename);
+                END LOOP;
+            END $$;                
+            """.trimIndent()
+
+        Database.query { session -> session.update(queryOf(sql)) }
     }
 
     private val container: PostgreSQLContainer by lazy {
