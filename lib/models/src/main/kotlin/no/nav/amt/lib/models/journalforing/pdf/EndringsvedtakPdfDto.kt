@@ -2,7 +2,6 @@ package no.nav.amt.lib.models.journalforing.pdf
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
-import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import java.time.LocalDate
 
 data class EndringsvedtakPdfDto(
@@ -30,8 +29,6 @@ data class EndringsvedtakPdfDto(
         val arrangor: ArrangorDto,
         val forskriftskapittel: Int,
         val pameldingstype: GjennomforingPameldingType,
-        val oppstart: HendelseDeltaker.Deltakerliste.Oppstartstype?, //Fases ut for påmeldingstype
-        val klagerett: Boolean, //fases ut for gjenbruk av templates
         val harKlagerett: Boolean
     )
 

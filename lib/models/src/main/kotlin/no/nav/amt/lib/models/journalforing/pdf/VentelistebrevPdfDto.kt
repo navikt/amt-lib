@@ -1,8 +1,6 @@
 package no.nav.amt.lib.models.journalforing.pdf
 
-import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
 import no.nav.amt.lib.models.deltakerliste.Oppstartstype
-import no.nav.amt.lib.models.hendelse.HendelseDeltaker
 import java.time.LocalDate
 
 data class VentelistebrevPdfDto(

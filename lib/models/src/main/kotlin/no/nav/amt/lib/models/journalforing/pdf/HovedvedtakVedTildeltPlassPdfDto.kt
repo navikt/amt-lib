@@ -1,6 +1,6 @@
 package no.nav.amt.lib.models.journalforing.pdf
 
-import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
+import no.nav.amt.lib.models.deltakerliste.Oppstartstype
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.time.LocalDate
 
@@ -30,7 +30,7 @@ data class HovedvedtakVedTildeltPlassPdfDto(
         val oppmoteSted: String?,
         val harKursetStartet: Boolean?,
         val harKlagerett: Boolean,
-        val pameldingstype: GjennomforingPameldingType
+        val oppstartstype: Oppstartstype
     )
 
     data class AvsenderDto(
