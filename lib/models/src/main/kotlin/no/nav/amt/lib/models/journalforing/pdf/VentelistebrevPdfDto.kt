@@ -1,5 +1,6 @@
 package no.nav.amt.lib.models.journalforing.pdf
 
+import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
 import java.time.LocalDate
 
 data class VentelistebrevPdfDto(
@@ -23,5 +24,6 @@ data class VentelistebrevPdfDto(
         val startdato: LocalDate?,
         val sluttdato: LocalDate?,
         val oppmoteSted: String?,
+        val pameldingstype: GjennomforingPameldingType
     )
 }
