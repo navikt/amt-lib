@@ -1,5 +1,6 @@
 package no.nav.amt.lib.models.journalforing.pdf
 
+import no.nav.amt.lib.models.deltakerliste.Oppstartstype
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.time.LocalDate
 
@@ -27,5 +28,6 @@ data class InnsokingsbrevPdfDto(
         val startdato: LocalDate?,
         val sluttdato: LocalDate?,
         val oppmoteSted: String?,
+        val oppstartstype: Oppstartstype,
     )
 }
