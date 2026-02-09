@@ -34,11 +34,23 @@ sealed class GjennomforingV2KafkaPayload {
     @get:JsonIgnore
     abstract val gjennomforingType: GjennomforingType
 
-    abstract fun assertValidChanges(
+    fun assertValidChanges(
         antallDeltakere: Int,
         eksisterendePameldingstype: GjennomforingPameldingType?,
         eksisterendeOppstartstype: Oppstartstype?,
-    )
+    ) {
+        if (antallDeltakere == 0) return
+
+        require(pameldingType == eksisterendePameldingstype) {
+            "Påmeldingstype kan ikke endres for deltakerliste $id med deltakere"
+        }
+
+        if (this !is Gruppe) return
+
+        require(oppstart == eksisterendeOppstartstype) {
+            "Oppstartstype kan ikke endres for deltakerliste $id med deltakere"
+        }
+    }
 
     fun assertPameldingstypeIsValid() {
         when {
@@ -88,23 +100,7 @@ sealed class GjennomforingV2KafkaPayload {
         val deltidsprosent: Double,
         val oppmoteSted: String?,
         override val gjennomforingType: GjennomforingType = GjennomforingType.Gruppe,
-    ) : GjennomforingV2KafkaPayload() {
-        override fun assertValidChanges(
-            antallDeltakere: Int,
-            eksisterendePameldingstype: GjennomforingPameldingType?,
-            eksisterendeOppstartstype: Oppstartstype?,
-        ) {
-            if (antallDeltakere == 0) return
-
-            require(eksisterendeOppstartstype == oppstart) {
-                "Oppstartstype kan ikke endres for deltakerliste $id med deltakere"
-            }
-
-            require(eksisterendePameldingstype == pameldingType) {
-                "Påmeldingstype kan ikke endres for deltakerliste $id med deltakere"
-            }
-        }
-    }
+    ) : GjennomforingV2KafkaPayload()
 
     data class Enkeltplass(
         override val id: UUID,
@@ -114,19 +110,7 @@ sealed class GjennomforingV2KafkaPayload {
         override val arrangor: Arrangor,
         override val pameldingType: GjennomforingPameldingType? = null,
         override val gjennomforingType: GjennomforingType = GjennomforingType.Enkeltplass,
-    ) : GjennomforingV2KafkaPayload() {
-        override fun assertValidChanges(
-            antallDeltakere: Int,
-            eksisterendePameldingstype: GjennomforingPameldingType?,
-            eksisterendeOppstartstype: Oppstartstype?, // finnes ikke for enkeltplass
-        ) {
-            if (antallDeltakere == 0) return
-
-            require(pameldingType == eksisterendePameldingstype) {
-                "Påmeldingstype kan ikke endres for deltakerliste $id med deltakere"
-            }
-        }
-    }
+    ) : GjennomforingV2KafkaPayload()
 
     fun <T : Any> toModel(gruppeMapper: (Gruppe) -> T, enkeltplassMapper: (Enkeltplass) -> T): T = when (this) {
         is Gruppe -> gruppeMapper(this)
