@@ -16,7 +16,7 @@ import kotlin.test.Ignore
 class CommonUnleashToggleTest {
     private val unleashClient: Unleash = mockk(relaxed = true)
 
-    private val sut = UnleashToggle(unleashClient)
+    private val sut = CommonUnleashToggle(unleashClient)
 
     @Nested
     inner class ErKometMasterForTiltakstype {

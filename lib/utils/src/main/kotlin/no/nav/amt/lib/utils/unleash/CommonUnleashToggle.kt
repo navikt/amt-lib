@@ -5,11 +5,7 @@ import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.util.Collections.emptySet
 import kotlin.collections.any
 
-// Til bruk der man ikke har flere toggles enn det som finnes her
-class UnleashToggle(unleashClient: Unleash): CommonUnleashToggle(unleashClient)
-
-// Til bruk hvis man har egne toggles men vil ha disse også
-sealed class CommonUnleashToggle(
+class CommonUnleashToggle(
     private val unleashClient: Unleash,
 ) {
     fun erKometMasterForTiltakstype(tiltakskode: String): Boolean = tiltakstyperKometErMasterFor.any { it.name == tiltakskode } ||
@@ -25,9 +21,12 @@ sealed class CommonUnleashToggle(
     fun skalLeseGjennomforing(tiltakskode: String): Boolean =
         erKometMasterForTiltakstype(tiltakskode) || skalLeseArenaDataForTiltakstype(tiltakskode)
 
+    fun skalProdusereTilDeltakerEksternTopic(): Boolean = unleashClient.isEnabled(PRODUSER_TIL_DELTAKER_EKSTERN_TOPIC)
+
     companion object {
         const val ENABLE_KOMET_DELTAKERE = "amt.enable-komet-deltakere"
         const val LES_ARENA_DELTAKERE = "amt.les-arena-deltakere"
+        const val PRODUSER_TIL_DELTAKER_EKSTERN_TOPIC = "amt.produser-deltakere-til-deltaker-ekstern-topic"
 
         private val tiltakstyperKometErMasterFor = setOf(
             Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
