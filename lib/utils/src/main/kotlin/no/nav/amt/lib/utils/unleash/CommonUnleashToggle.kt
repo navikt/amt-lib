@@ -23,6 +23,8 @@ class CommonUnleashToggle(
 
     fun skalProdusereTilDeltakerEksternTopic(): Boolean = unleashClient.isEnabled(PRODUSER_TIL_DELTAKER_EKSTERN_TOPIC)
 
+    fun getFeaturetoggles(features: List<String>): Map<String, Boolean> = features.associateWith { unleashClient.isEnabled(it) }
+
     companion object {
         const val ENABLE_KOMET_DELTAKERE = "amt.enable-komet-deltakere"
         const val LES_ARENA_DELTAKERE = "amt.les-arena-deltakere"
