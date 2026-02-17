@@ -11,6 +11,8 @@ import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.HOYERE_UTDANN
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.HOYERE_YRKESFAGLIG_UTDANNING
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.NORSKOPPLAERING_GRUNNLEGGENDE_FERDIGHETER_FOV
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.STUDIESPESIALISERING
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.JOBBKLUBB
+
 import java.util.UUID
 
 data class Tiltakstype(
@@ -30,7 +32,7 @@ data class Tiltakstype(
         val kursTiltak = setOf(
             GRUPPE_ARBEIDSMARKEDSOPPLAERING,
             GRUPPE_FAG_OG_YRKESOPPLAERING,
-            Tiltakskode.JOBBKLUBB,
+            JOBBKLUBB,
         )
         val enkeltplassTiltak = setOf(
             HOYERE_UTDANNING,
@@ -55,6 +57,6 @@ data class Tiltakstype(
     fun erKurs() = this.tiltakskode in kursTiltak
 
     fun erEnkeltplass() = this.tiltakskode in enkeltplassTiltak
-
+    val erOpplaeringstiltak = tiltakskode in opplaeringsTiltak
     val harDeltakelsesmengde = tiltakskode in setOf(Tiltakskode.ARBEIDSFORBEREDENDE_TRENING, Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET)
 }
