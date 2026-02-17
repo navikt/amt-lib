@@ -5,7 +5,11 @@ import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
 import java.util.Collections.emptySet
 import kotlin.collections.any
 
-class CommonUnleashToggle(
+// Til bruk der man ikke har flere toggles enn det som finnes her
+class UnleashToggle(unleashClient: Unleash): CommonUnleashToggle(unleashClient)
+
+// Til bruk hvis man har egne toggles men vil ha disse også
+sealed class CommonUnleashToggle(
     private val unleashClient: Unleash,
 ) {
     fun erKometMasterForTiltakstype(tiltakskode: String): Boolean = tiltakstyperKometErMasterFor.any { it.name == tiltakskode } ||
