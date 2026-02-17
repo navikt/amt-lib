@@ -5,17 +5,17 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode
-import no.nav.amt.lib.utils.unleash.UnleashToggle.Companion.ENABLE_KOMET_DELTAKERE
-import no.nav.amt.lib.utils.unleash.UnleashToggle.Companion.LES_ARENA_DELTAKERE
+import no.nav.amt.lib.utils.unleash.CommonUnleashToggle.Companion.ENABLE_KOMET_DELTAKERE
+import no.nav.amt.lib.utils.unleash.CommonUnleashToggle.Companion.LES_ARENA_DELTAKERE
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import kotlin.test.Ignore
 
-class UnleashToggleTest {
+class CommonUnleashToggleTest {
     private val unleashClient: Unleash = mockk(relaxed = true)
-    private val sut = UnleashToggle(unleashClient)
+    private val sut = CommonUnleashToggle(unleashClient)
 
     @Nested
     inner class ErKometMasterForTiltakstype {
