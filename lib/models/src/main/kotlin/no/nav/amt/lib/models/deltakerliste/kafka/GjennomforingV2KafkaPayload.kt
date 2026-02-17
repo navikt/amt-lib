@@ -62,7 +62,8 @@ sealed class GjennomforingV2KafkaPayload {
 
             this is Gruppe &&
                 tiltakskode in gruppetiltak &&
-                oppstart == Oppstartstype.FELLES -> {
+                oppstart == Oppstartstype.FELLES &&
+                    tiltakskode != Tiltakskode.JOBBKLUBB -> {
                 require(pameldingType == GjennomforingPameldingType.TRENGER_GODKJENNING) {
                     "FELLES oppstart for $tiltakskode krever TRENGER_GODKJENNING"
                 }
@@ -70,7 +71,8 @@ sealed class GjennomforingV2KafkaPayload {
 
             this is Gruppe &&
                 tiltakskode in gruppetiltak &&
-                oppstart == Oppstartstype.LOPENDE -> {
+                oppstart == Oppstartstype.LOPENDE &&
+                tiltakskode != Tiltakskode.JOBBKLUBB -> {
                 require(pameldingType == GjennomforingPameldingType.DIREKTE_VEDTAK) {
                     "LOPENDE oppstart for $tiltakskode krever DIREKTE_VEDTAK"
                 }

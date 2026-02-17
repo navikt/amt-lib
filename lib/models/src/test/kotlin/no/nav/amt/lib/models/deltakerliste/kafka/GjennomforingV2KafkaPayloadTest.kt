@@ -126,7 +126,7 @@ class GjennomforingV2KafkaPayloadTest {
         @EnumSource(
             Tiltakskode::class,
             names = [
-                "GRUPPE_ARBEIDSMARKEDSOPPLAERING", "GRUPPE_FAG_OG_YRKESOPPLAERING", "JOBBKLUBB",
+                "GRUPPE_ARBEIDSMARKEDSOPPLAERING", "GRUPPE_FAG_OG_YRKESOPPLAERING"
             ],
         )
         fun `gruppetiltak, felles oppstart skal validere`(tiltakskode: Tiltakskode) {
@@ -158,7 +158,7 @@ class GjennomforingV2KafkaPayloadTest {
         @EnumSource(
             Tiltakskode::class,
             names = [
-                "GRUPPE_ARBEIDSMARKEDSOPPLAERING", "GRUPPE_FAG_OG_YRKESOPPLAERING", "JOBBKLUBB",
+                "GRUPPE_ARBEIDSMARKEDSOPPLAERING", "GRUPPE_FAG_OG_YRKESOPPLAERING"
             ],
         )
         fun `gruppetiltak, lopende oppstart skal validere`(tiltakskode: Tiltakskode) {
@@ -184,6 +184,42 @@ class GjennomforingV2KafkaPayloadTest {
             }
 
             thrown.message shouldBe "LOPENDE oppstart for GRUPPE_ARBEIDSMARKEDSOPPLAERING krever DIREKTE_VEDTAK"
+        }
+
+        @ParameterizedTest
+        @EnumSource(
+            Tiltakskode::class,
+            names = [
+                "JOBBKLUBB"
+            ],
+        )
+        fun `jobbklubb, lopende oppstart skal validere`(tiltakskode: Tiltakskode) {
+            shouldNotThrowAny {
+                gruppeGjennomforing
+                    .copy(
+                        tiltakskode = tiltakskode,
+                        oppstart = Oppstartstype.LOPENDE,
+                        pameldingType = GjennomforingPameldingType.DIREKTE_VEDTAK,
+                    ).assertPameldingstypeIsValid()
+            }
+        }
+
+        @ParameterizedTest
+        @EnumSource(
+            Tiltakskode::class,
+            names = [
+                "JOBBKLUBB"
+            ],
+        )
+        fun `jobbklubb, felles oppstart skal validere`(tiltakskode: Tiltakskode) {
+            shouldNotThrowAny {
+                gruppeGjennomforing
+                    .copy(
+                        tiltakskode = tiltakskode,
+                        oppstart = Oppstartstype.FELLES,
+                        pameldingType = GjennomforingPameldingType.TRENGER_GODKJENNING,
+                    ).assertPameldingstypeIsValid()
+            }
         }
     }
 
