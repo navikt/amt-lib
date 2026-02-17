@@ -13,6 +13,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.jackson.kotlin)
     implementation(libs.jackson.jsr310)
+    implementation(libs.unleash.client)
+    implementation(project(":lib:models"))
 
     testImplementation(project(":lib:testing"))
     testImplementation(libs.kotlin.test.junit5)
@@ -20,4 +22,5 @@ dependencies {
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.assertions.json)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
 }
