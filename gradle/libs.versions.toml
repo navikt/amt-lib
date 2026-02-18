@@ -19,6 +19,7 @@ ktlint-plugin-version = "14.0.1"
 ktor-version = "3.4.0"
 caffeine-version = "3.2.3"
 mockk-version = "1.14.9"
+unleash-version = "12.1.1"
 
 [libraries]
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "jupiter-version" }
@@ -44,6 +45,7 @@ prometheus-metrics-instrumentation = { module = "io.prometheus:prometheus-metric
 prometheus-metrics-exporter = { module = "io.prometheus:prometheus-metrics-exporter-httpserver", version.ref = "prometheus-version" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor-version" }
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor-version" }
+unleash-client = { module = "io.getunleash:unleash-client-java", version.ref = "unleash-version" }
 
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine-version" }
 
