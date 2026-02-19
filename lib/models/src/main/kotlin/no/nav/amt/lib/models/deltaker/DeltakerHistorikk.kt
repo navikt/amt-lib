@@ -39,9 +39,9 @@ sealed interface DeltakerHistorikk {
     ) : DeltakerHistorikk {
         override val sistEndret = vedtak.sistEndret
 
-        override fun navAnsatte() = listOfNotNull(vedtak.sistEndretAv, vedtak.opprettetAv)
+        override fun navAnsatte() = listOf(vedtak.sistEndretAv, vedtak.opprettetAv)
 
-        override fun navEnheter() = listOfNotNull(vedtak.sistEndretAvEnhet, vedtak.opprettetAvEnhet)
+        override fun navEnheter() = listOf(vedtak.sistEndretAvEnhet, vedtak.opprettetAvEnhet)
     }
 
     data class InnsokPaaFellesOppstart(
@@ -49,9 +49,9 @@ sealed interface DeltakerHistorikk {
     ) : DeltakerHistorikk {
         override val sistEndret = data.innsokt
 
-        override fun navAnsatte() = listOfNotNull(data.innsoktAv)
+        override fun navAnsatte() = listOf(data.innsoktAv)
 
-        override fun navEnheter() = listOfNotNull(data.innsoktAvEnhet)
+        override fun navEnheter() = listOf(data.innsoktAvEnhet)
     }
 
     data class Forslag(
