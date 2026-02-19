@@ -8,28 +8,20 @@ import java.util.UUID
 sealed class DeltakerHistorikk {
     abstract val sistEndret: LocalDateTime
 
-    abstract fun navAnsatte(): List<UUID>
+    open fun navAnsatte(): List<UUID> = emptyList()
 
-    abstract fun navEnheter(): List<UUID>
+    open fun navEnheter(): List<UUID> = emptyList()
 
     data class VurderingFraArrangor(
         val data: VurderingFraArrangorData,
     ) : DeltakerHistorikk() {
         override val sistEndret = data.opprettet
-
-        override fun navAnsatte() = emptyList<UUID>()
-
-        override fun navEnheter() = emptyList<UUID>()
     }
 
     data class ImportertFraArena(
         val importertFraArena: no.nav.amt.lib.models.deltaker.ImportertFraArena,
     ) : DeltakerHistorikk() {
         override val sistEndret = importertFraArena.importertDato
-
-        override fun navAnsatte() = emptyList<UUID>()
-
-        override fun navEnheter() = emptyList<UUID>()
     }
 
     data class Endring(
@@ -76,10 +68,6 @@ sealed class DeltakerHistorikk {
         val endringFraArrangor: no.nav.amt.lib.models.arrangor.melding.EndringFraArrangor,
     ) : DeltakerHistorikk() {
         override val sistEndret = endringFraArrangor.opprettet
-
-        override fun navAnsatte() = emptyList<UUID>()
-
-        override fun navEnheter() = emptyList<UUID>()
     }
 
     data class EndringFraTiltakskoordinator(
