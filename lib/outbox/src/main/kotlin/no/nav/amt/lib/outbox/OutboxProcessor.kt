@@ -32,22 +32,18 @@ class OutboxProcessor(
      * @param initialDelay The initial delay before the job starts.
      * @param period The period between each job execution.
      */
-    fun start(initialDelay: Duration = Duration.ofMillis(1000), period: Duration = Duration.ofMillis(5000)) {
+    fun start(initialDelay: Duration = Duration.ofMillis(INITIAL_DELAY_MILLIS), period: Duration = Duration.ofMillis(PERIOD_MILLIS)) {
         jobManager.startJob(
-            name = "outbox-processor",
+            name = JOB_NAME,
             initialDelay = initialDelay,
             period = period,
-        ) {
-            processRecords()
-        }
+        ) { processRecords() }
     }
 
     internal fun processRecords() {
         try {
-            val unprocessedRecords = service.findUnprocessedRecords(100)
-            if (unprocessedRecords.isEmpty()) {
-                return
-            }
+            val unprocessedRecords = service.findUnprocessedRecords(DEFAULT_BATCH_SIZE)
+            if (unprocessedRecords.isEmpty()) return
 
             val failedKeys = mutableSetOf<KeyTopicPair>()
 
@@ -86,4 +82,11 @@ class OutboxProcessor(
         val key: String,
         val topic: String,
     )
+
+    companion object {
+        private const val JOB_NAME = "outbox-processor"
+        private const val INITIAL_DELAY_MILLIS = 1000L
+        private const val PERIOD_MILLIS = 5000L
+        private const val DEFAULT_BATCH_SIZE = 500
+    }
 }
