@@ -4,17 +4,17 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import no.nav.amt.lib.models.arrangor.melding.EndringFraArrangor
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.arrangor.melding.Vurderingstype
 import no.nav.amt.lib.models.tiltakskoordinator.EndringFraTiltakskoordinator
+import no.nav.amt.lib.utils.objectMapper
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.UUID
 
 class DeltakerHistorikkTest {
-    private val now = LocalDateTime.now()
-
     @Test
     fun `VurderingFraArrangor har korrekte properties`() {
         val vurderingFraArrangor = VurderingFraArrangorData(
@@ -209,15 +209,6 @@ class DeltakerHistorikkTest {
 
     @Test
     fun `EndringFraTiltakskoordinator har korrekte properties`() {
-        val endringFraTiltakskoordinator = EndringFraTiltakskoordinator(
-            id = UUID.randomUUID(),
-            deltakerId = UUID.randomUUID(),
-            endring = EndringFraTiltakskoordinator.TildelPlass,
-            endretAv = UUID.randomUUID(),
-            endretAvEnhet = UUID.randomUUID(),
-            endret = now.minusDays(4),
-        )
-
         val historikk = DeltakerHistorikk.EndringFraTiltakskoordinator(endringFraTiltakskoordinator)
 
         assertSoftly(historikk) {
@@ -225,5 +216,26 @@ class DeltakerHistorikkTest {
             navAnsatte() shouldBe listOf(endringFraTiltakskoordinator.endretAv)
             navEnheter() shouldBe listOf(endringFraTiltakskoordinator.endretAvEnhet)
         }
+    }
+
+    @Test
+    fun `endring serialiseres til JSON uten interface-navn`() {
+        val historikk = DeltakerHistorikk.EndringFraTiltakskoordinator(endringFraTiltakskoordinator)
+
+        objectMapper.writeValueAsString(historikk) shouldContain
+            """"type" : "EndringFraTiltakskoordinator""""
+    }
+
+    companion object {
+        private val now = LocalDateTime.now()
+
+        private val endringFraTiltakskoordinator = EndringFraTiltakskoordinator(
+            id = UUID.randomUUID(),
+            deltakerId = UUID.randomUUID(),
+            endring = EndringFraTiltakskoordinator.TildelPlass,
+            endretAv = UUID.randomUUID(),
+            endretAvEnhet = UUID.randomUUID(),
+            endret = now.minusDays(4),
+        )
     }
 }
