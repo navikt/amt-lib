@@ -23,6 +23,8 @@ class CommonUnleashToggle(
 
     fun skalProdusereTilDeltakerEksternTopic(): Boolean = unleashClient.isEnabled(PRODUSER_TIL_DELTAKER_EKSTERN_TOPIC)
 
+    fun prioriterSynkronKommunikasjon(): Boolean = unleashClient.isEnabled("amt.prioriter-synkron-kommunikasjon")
+
     fun getFeaturetoggles(features: List<String>): Map<String, Boolean> = features.associateWith { unleashClient.isEnabled(it) }
 
     companion object {
