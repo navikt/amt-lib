@@ -5,28 +5,28 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-sealed class DeltakerHistorikk {
-    abstract val sistEndret: LocalDateTime
+sealed interface DeltakerHistorikk {
+    val sistEndret: LocalDateTime
 
-    open fun navAnsatte(): List<UUID> = emptyList()
+    fun navAnsatte(): List<UUID> = emptyList()
 
-    open fun navEnheter(): List<UUID> = emptyList()
+    fun navEnheter(): List<UUID> = emptyList()
 
     data class VurderingFraArrangor(
         val data: VurderingFraArrangorData,
-    ) : DeltakerHistorikk() {
+    ) : DeltakerHistorikk {
         override val sistEndret = data.opprettet
     }
 
     data class ImportertFraArena(
         val importertFraArena: no.nav.amt.lib.models.deltaker.ImportertFraArena,
-    ) : DeltakerHistorikk() {
+    ) : DeltakerHistorikk {
         override val sistEndret = importertFraArena.importertDato
     }
 
     data class Endring(
         val endring: DeltakerEndring,
-    ) : DeltakerHistorikk() {
+    ) : DeltakerHistorikk {
         override val sistEndret = endring.endret
 
         override fun navAnsatte() = listOf(endring.endretAv)
@@ -36,7 +36,7 @@ sealed class DeltakerHistorikk {
 
     data class Vedtak(
         val vedtak: no.nav.amt.lib.models.deltaker.Vedtak,
-    ) : DeltakerHistorikk() {
+    ) : DeltakerHistorikk {
         override val sistEndret = vedtak.sistEndret
 
         override fun navAnsatte() = listOfNotNull(vedtak.sistEndretAv, vedtak.opprettetAv)
@@ -46,7 +46,7 @@ sealed class DeltakerHistorikk {
 
     data class InnsokPaaFellesOppstart(
         val data: no.nav.amt.lib.models.deltaker.InnsokPaaFellesOppstart,
-    ) : DeltakerHistorikk() {
+    ) : DeltakerHistorikk {
         override val sistEndret = data.innsokt
 
         override fun navAnsatte() = listOfNotNull(data.innsoktAv)
@@ -56,7 +56,7 @@ sealed class DeltakerHistorikk {
 
     data class Forslag(
         val forslag: no.nav.amt.lib.models.arrangor.melding.Forslag,
-    ) : DeltakerHistorikk() {
+    ) : DeltakerHistorikk {
         override val sistEndret = forslag.sistEndret
 
         override fun navAnsatte() = listOfNotNull(forslag.getNavAnsatt()?.id)
@@ -66,13 +66,13 @@ sealed class DeltakerHistorikk {
 
     data class EndringFraArrangor(
         val endringFraArrangor: no.nav.amt.lib.models.arrangor.melding.EndringFraArrangor,
-    ) : DeltakerHistorikk() {
+    ) : DeltakerHistorikk {
         override val sistEndret = endringFraArrangor.opprettet
     }
 
     data class EndringFraTiltakskoordinator(
         val endringFraTiltakskoordinator: no.nav.amt.lib.models.tiltakskoordinator.EndringFraTiltakskoordinator,
-    ) : DeltakerHistorikk() {
+    ) : DeltakerHistorikk {
         override val sistEndret = endringFraTiltakskoordinator.endret
 
         override fun navAnsatte() = listOf(endringFraTiltakskoordinator.endretAv)

@@ -23,16 +23,16 @@ import java.util.UUID
     JsonSubTypes.Type(value = GjennomforingV2KafkaPayload.Gruppe::class, name = GRUPPE_V2_TYPE),
     JsonSubTypes.Type(value = GjennomforingV2KafkaPayload.Enkeltplass::class, name = ENKELTPLASS_V2_TYPE),
 )
-sealed class GjennomforingV2KafkaPayload {
-    abstract val id: UUID
-    abstract val opprettetTidspunkt: OffsetDateTime
-    abstract val oppdatertTidspunkt: OffsetDateTime
-    abstract val tiltakskode: Tiltakskode
-    abstract val arrangor: Arrangor
-    abstract val pameldingType: GjennomforingPameldingType?
+sealed interface GjennomforingV2KafkaPayload {
+    val id: UUID
+    val opprettetTidspunkt: OffsetDateTime
+    val oppdatertTidspunkt: OffsetDateTime
+    val tiltakskode: Tiltakskode
+    val arrangor: Arrangor
+    val pameldingType: GjennomforingPameldingType?
 
     @get:JsonIgnore
-    abstract val gjennomforingType: GjennomforingType
+    val gjennomforingType: GjennomforingType
 
     fun assertValidChanges(
         antallDeltakere: Int,
@@ -63,7 +63,7 @@ sealed class GjennomforingV2KafkaPayload {
             this is Gruppe &&
                 tiltakskode in gruppetiltak &&
                 oppstart == Oppstartstype.FELLES &&
-                    tiltakskode != Tiltakskode.JOBBKLUBB -> {
+                tiltakskode != Tiltakskode.JOBBKLUBB -> {
                 require(pameldingType == GjennomforingPameldingType.TRENGER_GODKJENNING) {
                     "FELLES oppstart for $tiltakskode krever TRENGER_GODKJENNING"
                 }
@@ -102,7 +102,7 @@ sealed class GjennomforingV2KafkaPayload {
         val deltidsprosent: Double,
         val oppmoteSted: String?,
         override val gjennomforingType: GjennomforingType = GjennomforingType.Gruppe,
-    ) : GjennomforingV2KafkaPayload()
+    ) : GjennomforingV2KafkaPayload
 
     data class Enkeltplass(
         override val id: UUID,
@@ -112,7 +112,7 @@ sealed class GjennomforingV2KafkaPayload {
         override val arrangor: Arrangor,
         override val pameldingType: GjennomforingPameldingType? = null,
         override val gjennomforingType: GjennomforingType = GjennomforingType.Enkeltplass,
-    ) : GjennomforingV2KafkaPayload()
+    ) : GjennomforingV2KafkaPayload
 
     fun <T : Any> toModel(gruppeMapper: (Gruppe) -> T, enkeltplassMapper: (Enkeltplass) -> T): T = when (this) {
         is Gruppe -> gruppeMapper(this)
