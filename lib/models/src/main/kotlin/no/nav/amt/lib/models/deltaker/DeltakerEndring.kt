@@ -36,75 +36,75 @@ data class DeltakerEndring(
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-    sealed class Endring {
+    sealed interface Endring {
         data class EndreBakgrunnsinformasjon(
             val bakgrunnsinformasjon: String?,
-        ) : Endring()
+        ) : Endring
 
         data class EndreInnhold(
             val ledetekst: String?,
             val innhold: List<Innhold>,
-        ) : Endring()
+        ) : Endring
 
         data class EndreDeltakelsesmengde(
             val deltakelsesprosent: Float?,
             val dagerPerUke: Float?,
             val gyldigFra: LocalDate?,
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
 
         data class EndreStartdato(
             val startdato: LocalDate?,
             val sluttdato: LocalDate?,
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
 
         data class EndreSluttdato(
             val sluttdato: LocalDate,
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
 
         data class ForlengDeltakelse(
             val sluttdato: LocalDate,
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
 
         data class IkkeAktuell(
             val aarsak: Aarsak,
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
 
         data class AvsluttDeltakelse(
             val aarsak: Aarsak?,
             val sluttdato: LocalDate,
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
 
         data class EndreAvslutning(
             val aarsak: Aarsak?,
             val harFullfort: Boolean?,
             val sluttdato: LocalDate? = null,
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
 
         data class AvbrytDeltakelse(
             val aarsak: Aarsak,
             val sluttdato: LocalDate,
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
 
         data class EndreSluttarsak(
             val aarsak: Aarsak,
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
 
         data class ReaktiverDeltakelse(
             val reaktivertDato: LocalDate,
             val begrunnelse: String,
-        ) : Endring()
+        ) : Endring
 
         data class FjernOppstartsdato(
             val begrunnelse: String?,
-        ) : Endring()
+        ) : Endring
     }
 }

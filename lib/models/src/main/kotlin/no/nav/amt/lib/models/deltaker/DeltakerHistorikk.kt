@@ -1,72 +1,82 @@
 package no.nav.amt.lib.models.deltaker
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import java.time.LocalDateTime
+import java.util.UUID
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.SIMPLE_NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-sealed class DeltakerHistorikk {
-    val sistEndret
-        get() = when (this) {
-            is Endring -> endring.endret
-            is Vedtak -> vedtak.sistEndret
-            is InnsokPaaFellesOppstart -> data.innsokt
-            is Forslag -> forslag.sistEndret
-            is EndringFraArrangor -> endringFraArrangor.opprettet
-            is ImportertFraArena -> importertFraArena.importertDato
-            is VurderingFraArrangor -> data.opprettet
-            is EndringFraTiltakskoordinator -> endringFraTiltakskoordinator.endret
-        }
+sealed interface DeltakerHistorikk {
+    val sistEndret: LocalDateTime
+
+    fun navAnsatte(): List<UUID> = emptyList()
+
+    fun navEnheter(): List<UUID> = emptyList()
 
     data class VurderingFraArrangor(
         val data: VurderingFraArrangorData,
-    ) : DeltakerHistorikk()
+    ) : DeltakerHistorikk {
+        override val sistEndret = data.opprettet
+    }
 
     data class ImportertFraArena(
         val importertFraArena: no.nav.amt.lib.models.deltaker.ImportertFraArena,
-    ) : DeltakerHistorikk()
+    ) : DeltakerHistorikk {
+        override val sistEndret = importertFraArena.importertDato
+    }
 
     data class Endring(
         val endring: DeltakerEndring,
-    ) : DeltakerHistorikk()
+    ) : DeltakerHistorikk {
+        override val sistEndret = endring.endret
+
+        override fun navAnsatte() = listOf(endring.endretAv)
+
+        override fun navEnheter() = listOf(endring.endretAvEnhet)
+    }
 
     data class Vedtak(
         val vedtak: no.nav.amt.lib.models.deltaker.Vedtak,
-    ) : DeltakerHistorikk()
+    ) : DeltakerHistorikk {
+        override val sistEndret = vedtak.sistEndret
+
+        override fun navAnsatte() = listOfNotNull(vedtak.sistEndretAv, vedtak.opprettetAv)
+
+        override fun navEnheter() = listOfNotNull(vedtak.sistEndretAvEnhet, vedtak.opprettetAvEnhet)
+    }
 
     data class InnsokPaaFellesOppstart(
         val data: no.nav.amt.lib.models.deltaker.InnsokPaaFellesOppstart,
-    ) : DeltakerHistorikk()
+    ) : DeltakerHistorikk {
+        override val sistEndret = data.innsokt
+
+        override fun navAnsatte() = listOfNotNull(data.innsoktAv)
+
+        override fun navEnheter() = listOfNotNull(data.innsoktAvEnhet)
+    }
 
     data class Forslag(
         val forslag: no.nav.amt.lib.models.arrangor.melding.Forslag,
-    ) : DeltakerHistorikk()
+    ) : DeltakerHistorikk {
+        override val sistEndret = forslag.sistEndret
+
+        override fun navAnsatte() = listOfNotNull(forslag.getNavAnsatt()?.id)
+
+        override fun navEnheter() = listOfNotNull(forslag.getNavAnsatt()?.enhetId)
+    }
 
     data class EndringFraArrangor(
         val endringFraArrangor: no.nav.amt.lib.models.arrangor.melding.EndringFraArrangor,
-    ) : DeltakerHistorikk()
+    ) : DeltakerHistorikk {
+        override val sistEndret = endringFraArrangor.opprettet
+    }
 
     data class EndringFraTiltakskoordinator(
         val endringFraTiltakskoordinator: no.nav.amt.lib.models.tiltakskoordinator.EndringFraTiltakskoordinator,
-    ) : DeltakerHistorikk()
+    ) : DeltakerHistorikk {
+        override val sistEndret = endringFraTiltakskoordinator.endret
 
-    fun navAnsatte() = when (this) {
-        is Endring -> listOf(this.endring.endretAv)
-        is Vedtak -> listOfNotNull(this.vedtak.sistEndretAv, this.vedtak.opprettetAv)
-        is InnsokPaaFellesOppstart -> listOfNotNull(this.data.innsoktAv)
-        is Forslag -> listOfNotNull(this.forslag.getNavAnsatt()?.id)
-        is EndringFraArrangor -> emptyList()
-        is ImportertFraArena -> emptyList()
-        is VurderingFraArrangor -> emptyList()
-        is EndringFraTiltakskoordinator -> listOf(this.endringFraTiltakskoordinator.endretAv)
-    }
+        override fun navAnsatte() = listOf(endringFraTiltakskoordinator.endretAv)
 
-    fun navEnheter() = when (this) {
-        is Endring -> listOf(this.endring.endretAvEnhet)
-        is Vedtak -> listOfNotNull(this.vedtak.sistEndretAvEnhet, this.vedtak.opprettetAvEnhet)
-        is InnsokPaaFellesOppstart -> listOfNotNull(this.data.innsoktAvEnhet)
-        is Forslag -> listOfNotNull(this.forslag.getNavAnsatt()?.enhetId)
-        is EndringFraArrangor -> emptyList()
-        is ImportertFraArena -> emptyList()
-        is VurderingFraArrangor -> emptyList()
-        is EndringFraTiltakskoordinator -> listOf(this.endringFraTiltakskoordinator.endretAvEnhet)
+        override fun navEnheter() = listOf(endringFraTiltakskoordinator.endretAvEnhet)
     }
 }
