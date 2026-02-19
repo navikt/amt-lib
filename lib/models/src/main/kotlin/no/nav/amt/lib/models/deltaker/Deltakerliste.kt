@@ -9,7 +9,7 @@ import java.util.UUID
 data class Deltakerliste(
     val id: UUID,
     val navn: String,
-    val gjennomforingstype: GjennomforingType = GjennomforingType.Gruppe, // fjern default-verdi etter neste relast
+    val gjennomforingstype: GjennomforingType = GjennomforingType.Gruppe,
     val tiltak: Tiltak,
     val startdato: LocalDate? = null,
     val sluttdato: LocalDate? = null,
