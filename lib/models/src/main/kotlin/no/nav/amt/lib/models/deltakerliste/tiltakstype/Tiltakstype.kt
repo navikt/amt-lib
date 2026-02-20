@@ -12,6 +12,8 @@ import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.HOYERE_YRKESF
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.NORSKOPPLAERING_GRUNNLEGGENDE_FERDIGHETER_FOV
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.STUDIESPESIALISERING
 import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.JOBBKLUBB
+import no.nav.amt.lib.models.deltakerliste.tiltakstype.Tiltakskode.DIGITALT_OPPFOLGINGSTILTAK
+
 
 import java.util.UUID
 
@@ -51,6 +53,13 @@ data class Tiltakstype(
             FAG_OG_YRKESOPPLAERING,
             HOYERE_YRKESFAGLIG_UTDANNING
         )
+        
+        val tiltakUtenDeltakerAdresseDeling = setOf(
+            DIGITALT_OPPFOLGINGSTILTAK,
+            JOBBKLUBB,
+            GRUPPE_ARBEIDSMARKEDSOPPLAERING,
+            GRUPPE_FAG_OG_YRKESOPPLAERING,
+        )
     }
 
     @Deprecated("Utrygg sjekk av kurstiltak. Må erstattes med å sjekke oppstartstype på tiltak")
@@ -59,4 +68,5 @@ data class Tiltakstype(
     fun erEnkeltplass() = this.tiltakskode in enkeltplassTiltak
     val erOpplaeringstiltak = tiltakskode in opplaeringsTiltak
     val harDeltakelsesmengde = tiltakskode in setOf(Tiltakskode.ARBEIDSFORBEREDENDE_TRENING, Tiltakskode.VARIG_TILRETTELAGT_ARBEID_SKJERMET)
+    val adresseKanDelesMedArrangor = tiltakskode !in tiltakUtenDeltakerAdresseDeling
 }
