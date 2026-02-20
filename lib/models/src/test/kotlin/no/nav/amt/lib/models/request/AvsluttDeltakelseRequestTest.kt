@@ -10,7 +10,7 @@ import java.time.LocalDate
 
 class AvsluttDeltakelseRequestTest {
     @Test
-    fun getForslagId() {
+    fun `AvsluttDeltakelseRequest skal serialisere og deserialisere korrekt`() {
         val request = AvsluttDeltakelseRequest(
             endretAv = "test",
             endretAvEnhet = "test-enhet",
