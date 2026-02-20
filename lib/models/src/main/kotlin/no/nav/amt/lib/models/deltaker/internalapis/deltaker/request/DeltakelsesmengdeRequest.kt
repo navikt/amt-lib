@@ -1,5 +1,6 @@
 package no.nav.amt.lib.models.deltaker.internalapis.deltaker.request
 
+import no.nav.amt.lib.models.deltaker.DeltakerEndring
 import java.time.LocalDate
 import java.util.UUID
 
@@ -11,4 +12,11 @@ data class DeltakelsesmengdeRequest(
     val dagerPerUke: Int?,
     val begrunnelse: String?,
     val gyldigFra: LocalDate?,
-) : EndringForslagRequest
+) : EndringForslagRequest {
+    override fun toEndring() = DeltakerEndring.Endring.EndreDeltakelsesmengde(
+        deltakelsesprosent = this.deltakelsesprosent?.toFloat(),
+        dagerPerUke = this.dagerPerUke?.toFloat(),
+        begrunnelse = this.begrunnelse,
+        gyldigFra = this.gyldigFra,
+    )
+}
