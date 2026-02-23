@@ -27,10 +27,13 @@ class CommonUnleashToggle(
 
     fun getFeaturetoggles(features: List<String>): Map<String, Boolean> = features.associateWith { unleashClient.isEnabled(it) }
 
+    fun skalOppdatereUendredeAktivitetskort(): Boolean = unleashClient.isEnabled(OPPDATER_ALLE_AKTIVITETSKORT)
+
     companion object {
         const val ENABLE_KOMET_DELTAKERE = "amt.enable-komet-deltakere"
         const val LES_ARENA_DELTAKERE = "amt.les-arena-deltakere"
         const val PRODUSER_TIL_DELTAKER_EKSTERN_TOPIC = "amt.produser-deltakere-til-deltaker-ekstern-topic"
+        const val OPPDATER_ALLE_AKTIVITETSKORT = "amt.oppdater-alle-aktivitetskort"
 
         private val tiltakstyperKometErMasterFor = setOf(
             Tiltakskode.ARBEIDSFORBEREDENDE_TRENING,
