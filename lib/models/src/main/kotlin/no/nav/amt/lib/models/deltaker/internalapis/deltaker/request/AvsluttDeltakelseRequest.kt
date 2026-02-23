@@ -11,10 +11,12 @@ data class AvsluttDeltakelseRequest(
     val sluttdato: LocalDate,
     val aarsak: DeltakerEndring.Aarsak?,
     val begrunnelse: String?,
+    val harFullfort: Boolean
 ) : EndringForslagRequest {
     override fun toEndring() = DeltakerEndring.Endring.AvsluttDeltakelse(
         aarsak = aarsak,
         sluttdato = sluttdato,
         begrunnelse = begrunnelse,
+        harFullfort = harFullfort,
     )
 }
