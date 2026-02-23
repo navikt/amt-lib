@@ -18,6 +18,7 @@ class AvsluttDeltakelseRequestTest {
             sluttdato = LocalDate.now(),
             aarsak = null,
             begrunnelse = null,
+            harFullfort = true
         )
 
         val json = objectMapper.writeValueAsString(request)

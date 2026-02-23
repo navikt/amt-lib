@@ -5,7 +5,12 @@ import no.nav.amt.lib.models.arrangor.melding.Forslag
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
-
+/*
+    Dette objektet representerer en endring på deltaker
+    Det brukes til å populere deltakerhistorikk(sammen med EndringFraArrangor), og
+    som intern domenemodell i amt-deltaker-bff (blant annet)
+    https://www.figma.com/board/AIPGnJY7UEFfADbShTPBWh/Domenemodell-Endringer?node-id=0-1&p=f&t=QDpzR8FzLQuPDWiY-0
+ */
 data class DeltakerEndring(
     val id: UUID,
     val deltakerId: UUID,
@@ -78,6 +83,7 @@ data class DeltakerEndring(
             val aarsak: Aarsak?,
             val sluttdato: LocalDate,
             val begrunnelse: String?,
+            val harFullfort: Boolean,
         ) : Endring
 
         data class EndreAvslutning(

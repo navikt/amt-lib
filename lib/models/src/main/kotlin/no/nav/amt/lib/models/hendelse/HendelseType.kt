@@ -105,6 +105,7 @@ sealed interface HendelseType {
     data class AvsluttDeltakelse(
         val aarsak: DeltakerEndring.Aarsak?,
         val sluttdato: LocalDate,
+        val harFullfort: Boolean,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
         override val endringFraForslag: Forslag.Endring?,
@@ -171,15 +172,16 @@ data class InnholdDto(
 )
 
 fun DeltakerEndring.toHendelseEndring(utkast: UtkastDto? = null) = when (val endring = this.endring) {
-    is DeltakerEndring.Endring.AvsluttDeltakelse -> HendelseType.AvsluttDeltakelse(
+    is Endring.AvsluttDeltakelse -> HendelseType.AvsluttDeltakelse(
         aarsak = endring.aarsak,
         sluttdato = endring.sluttdato,
+        harFullfort = endring.harFullfort,
         begrunnelseFraNav = endring.begrunnelse,
         begrunnelseFraArrangor = forslag?.begrunnelse,
         endringFraForslag = forslag?.endring,
     )
 
-    is DeltakerEndring.Endring.EndreAvslutning -> HendelseType.EndreAvslutning(
+    is Endring.EndreAvslutning -> HendelseType.EndreAvslutning(
         aarsak = endring.aarsak,
         harFullfort = endring.harFullfort,
         sluttdato = endring.sluttdato,
@@ -188,7 +190,7 @@ fun DeltakerEndring.toHendelseEndring(utkast: UtkastDto? = null) = when (val end
         endringFraForslag = forslag?.endring,
     )
 
-    is DeltakerEndring.Endring.AvbrytDeltakelse -> HendelseType.AvbrytDeltakelse(
+    is Endring.AvbrytDeltakelse -> HendelseType.AvbrytDeltakelse(
         aarsak = endring.aarsak,
         sluttdato = endring.sluttdato,
         begrunnelseFraNav = endring.begrunnelse,
@@ -196,7 +198,7 @@ fun DeltakerEndring.toHendelseEndring(utkast: UtkastDto? = null) = when (val end
         endringFraForslag = forslag?.endring,
     )
 
-    is DeltakerEndring.Endring.EndreBakgrunnsinformasjon -> HendelseType.EndreBakgrunnsinformasjon(
+    is Endring.EndreBakgrunnsinformasjon -> HendelseType.EndreBakgrunnsinformasjon(
         endring.bakgrunnsinformasjon,
     )
 
