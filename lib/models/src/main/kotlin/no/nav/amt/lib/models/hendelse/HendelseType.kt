@@ -105,7 +105,7 @@ sealed interface HendelseType {
     data class AvsluttDeltakelse(
         val aarsak: DeltakerEndring.Aarsak?,
         val sluttdato: LocalDate,
-        val harFullfort: Boolean,
+        val harFullfort: Boolean?,
         override val begrunnelseFraNav: String?,
         override val begrunnelseFraArrangor: String?,
         override val endringFraForslag: Forslag.Endring?,
