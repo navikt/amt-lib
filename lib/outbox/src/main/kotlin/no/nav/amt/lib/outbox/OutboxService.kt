@@ -12,7 +12,7 @@ import no.nav.amt.lib.utils.objectMapper
 class OutboxService(
     private val meter: OutboxMeter = PrometheusOutboxMeter(),
 ) {
-    private val repository = OutboxRepository()
+    private val outboxRepository = OutboxRepository()
 
     /**
      * Creates a new outbox event and persists it to the database.
@@ -36,7 +36,7 @@ class OutboxService(
             topic = topic,
             value = objectMapper.valueToTree(value),
         )
-        return repository
+        return outboxRepository
             .insertNewRecord(outboxRecord, suppressOutsideTxWarning)
             .also { meter.incrementNewRecords(topic) }
     }
@@ -47,7 +47,7 @@ class OutboxService(
      * @param limit The maximum number of events to return.
      * @return A list of unprocessed [OutboxRecord]s.
      */
-    fun findUnprocessedRecords(limit: Int): List<OutboxRecord> = repository.findUnprocessedRecords(limit)
+    fun findUnprocessedRecords(limit: Int): List<OutboxRecord> = outboxRepository.findUnprocessedRecords(limit)
 
     /**
      * Marks an outbox record as processed.
@@ -55,7 +55,7 @@ class OutboxService(
      * @param record The record to mark as processed.
      */
     fun markAsProcessed(record: OutboxRecord) {
-        repository.markAsProcessed(record.id)
+        outboxRepository.deletedOutboxRecord(record.id)
         meter.incrementProcessedRecords(record.topic, OutboxRecordStatus.PROCESSED)
     }
 
@@ -66,9 +66,9 @@ class OutboxService(
      * @param errorMessage A message describing the reason for the failure.
      */
     fun markAsFailed(record: OutboxRecord, errorMessage: String) {
-        repository.markAsFailed(record.id, errorMessage)
+        outboxRepository.markAsFailed(record.id, errorMessage)
         meter.incrementProcessedRecords(record.topic, OutboxRecordStatus.FAILED)
     }
 
-    fun getRecordsByTopicAndKey(topic: String, key: String): List<OutboxRecord> = repository.getRecordsByTopicAndKey(topic, key)
+    fun getRecordsByTopicAndKey(topic: String, key: String): List<OutboxRecord> = outboxRepository.getRecordsByTopicAndKey(topic, key)
 }

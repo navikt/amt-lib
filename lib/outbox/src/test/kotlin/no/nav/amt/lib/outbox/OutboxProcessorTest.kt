@@ -1,5 +1,6 @@
 package no.nav.amt.lib.outbox
 
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.prometheus.metrics.model.registry.PrometheusRegistry
@@ -10,12 +11,10 @@ import no.nav.amt.lib.outbox.utils.assertProduced
 import no.nav.amt.lib.testing.AsyncUtils
 import no.nav.amt.lib.testing.SingletonKafkaProvider
 import no.nav.amt.lib.testing.TestPostgresContainer
-import no.nav.amt.lib.testing.shouldBeCloseTo
 import no.nav.amt.lib.utils.job.JobManager
 import no.nav.amt.lib.utils.objectMapper
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 import java.util.UUID
 
 class OutboxProcessorTest {
@@ -33,7 +32,7 @@ class OutboxProcessorTest {
     private val kafkaProducer = Producer<String, String>(kafkaConfig)
 
     private val outboxProcessor = OutboxProcessor(
-        service = outboxService,
+        outboxService = outboxService,
         jobManager = JobManager({ true }, { true }),
         producer = kafkaProducer,
     )
@@ -46,12 +45,8 @@ class OutboxProcessorTest {
         val record = newRecord()
         outboxProcessor.processRecords()
 
-        val processedRecord = outboxRepository.get(record.id)!!
+        outboxRepository.get(record.id).shouldBeNull()
 
-        processedRecord.processedAt.shouldNotBeNull()
-        processedRecord.processedAt shouldBeCloseTo LocalDateTime.now()
-
-        processedRecord.status shouldBe OutboxRecordStatus.PROCESSED
         verifyProducedRecord(record)
     }
 
@@ -84,9 +79,7 @@ class OutboxProcessorTest {
         outboxProcessor.processRecords()
 
         records.forEach { record ->
-            val processedRecord = outboxRepository.get(record.id)!!
-            processedRecord.status shouldBe OutboxRecordStatus.PROCESSED
-            processedRecord.processedAt!! shouldBeCloseTo LocalDateTime.now()
+            outboxRepository.get(record.id).shouldBeNull()
             verifyProducedRecord(record)
         }
     }
@@ -99,9 +92,7 @@ class OutboxProcessorTest {
         outboxProcessor.processRecords()
 
         successRecords.forEach { record ->
-            val processedRecord = outboxRepository.get(record.id)!!
-            processedRecord.status shouldBe OutboxRecordStatus.PROCESSED
-            verifyProducedRecord(record)
+            outboxRepository.get(record.id).shouldBeNull()
         }
 
         failRecords.forEach { record ->
@@ -134,25 +125,9 @@ class OutboxProcessorTest {
 
         outboxProcessor.processRecords()
 
-        outboxRepository.get(failingRecord.id)!!.status shouldBe OutboxRecordStatus.FAILED
-        outboxRepository.get(successRecord.id)!!.status shouldBe OutboxRecordStatus.PROCESSED
+        outboxRepository.get(failingRecord.id).shouldNotBeNull().status shouldBe OutboxRecordStatus.FAILED
+        outboxRepository.get(successRecord.id).shouldBeNull()
         verifyProducedRecord(successRecord)
-    }
-
-    @Test
-    fun `processRecords - records processed in creation order`() {
-        val records = newRecords(3)
-
-        outboxProcessor.processRecords()
-
-        val processedRecords = records.map { outboxRepository.get(it.id)!! }
-        processedRecords.forEach {
-            it.status shouldBe OutboxRecordStatus.PROCESSED
-        }
-        val sortedByProcessedAt = processedRecords.sortedBy { it.processedAt!! }
-        val sortedById = processedRecords.sortedBy { it.id.value }
-
-        sortedByProcessedAt.map { it.id } shouldBe sortedById.map { it.id }
     }
 
     private data class Value(

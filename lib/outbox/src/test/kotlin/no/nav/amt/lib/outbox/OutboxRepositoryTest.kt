@@ -1,5 +1,7 @@
 package no.nav.amt.lib.outbox
 
+import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.amt.lib.testing.TestPostgresContainer
@@ -32,6 +34,7 @@ class OutboxRepositoryTest {
     @Test
     fun `findUnprocessedRecords returns pending and failed records`() {
         val repo = OutboxRepository()
+
         val pendingRecord = NewOutboxRecord(
             key = "key-1",
             valueType = "type-1",
@@ -39,6 +42,7 @@ class OutboxRepositoryTest {
             value = objectMapper.createObjectNode().put("key", "pending"),
         )
         repo.insertNewRecord(pendingRecord)
+
         val failedRecord = pendingRecord.copy(
             key = "key-2",
             value = objectMapper.createObjectNode().put("key", "failed"),
@@ -46,21 +50,20 @@ class OutboxRepositoryTest {
         repo.insertNewRecord(failedRecord).also {
             repo.markAsFailed(it.id, "Some error")
         }
+
         val processedRecord = pendingRecord.copy(
             key = "key-3",
             value = objectMapper.createObjectNode().put("key", "processed"),
         )
-        repo.insertNewRecord(processedRecord).also { repo.markAsProcessed(it.id) }
+        repo.insertNewRecord(processedRecord).also { repo.deletedOutboxRecord(it.id) }
 
         val result = repo.findUnprocessedRecords(10)
-        result.map { it.status }.toSet().find { it == OutboxRecordStatus.PROCESSED } shouldBe null
-        result.any { it.key == "key-1" } shouldBe true
-        result.any { it.key == "key-2" } shouldBe true
-        result.any { it.key == "key-3" } shouldBe false
+
+        result.map { it.key }.toSet() shouldContainAll setOf("key-1", "key-2")
     }
 
     @Test
-    fun `markAsProcessed updates record status and processedAt`() {
+    fun `markAsProcessed deletes record`() {
         val repo = OutboxRepository()
         val record = NewOutboxRecord(
             key = "key-4",
@@ -69,10 +72,9 @@ class OutboxRepositoryTest {
             value = objectMapper.createObjectNode().put("key", "to-process"),
         )
         val inserted = repo.insertNewRecord(record)
-        repo.markAsProcessed(inserted.id)
-        val updated = repo.get(inserted.id)
-        updated?.status shouldBe OutboxRecordStatus.PROCESSED
-        updated?.processedAt shouldNotBe null
+        repo.deletedOutboxRecord(inserted.id)
+
+        repo.get(inserted.id).shouldBeNull()
     }
 
     @Test

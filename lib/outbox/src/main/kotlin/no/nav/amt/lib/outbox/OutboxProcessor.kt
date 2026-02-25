@@ -15,12 +15,12 @@ import java.time.Duration
  * To avoid publishing records out of order for the same key, the processor will not publish any new records for a key/topic
  * if a previous record for the same key/topic has failed.
  *
- * @param service The service for interacting with the outbox record repository.
+ * @param outboxService The service for interacting with the outbox record repository.
  * @param jobManager The job manager for scheduling the background job.
  * @param producer The Kafka producer for publishing records.
  */
 class OutboxProcessor(
-    private val service: OutboxService,
+    private val outboxService: OutboxService,
     private val jobManager: JobManager,
     private val producer: Producer<String, String>,
 ) {
@@ -42,7 +42,7 @@ class OutboxProcessor(
 
     internal fun processRecords() {
         try {
-            val unprocessedRecords = service.findUnprocessedRecords(DEFAULT_BATCH_SIZE)
+            val unprocessedRecords = outboxService.findUnprocessedRecords(DEFAULT_BATCH_SIZE)
             if (unprocessedRecords.isEmpty()) return
 
             val failedKeys = mutableSetOf<KeyTopicPair>()
@@ -58,7 +58,7 @@ class OutboxProcessor(
                     }
                     process(record)
                 } catch (e: Exception) {
-                    service.markAsFailed(record, e.message ?: e::class.java.name)
+                    outboxService.markAsFailed(record, e.message ?: e::class.java.name)
                     log.error("Failed to process outbox-record ${record.id}", e)
                     failedKeys.add(KeyTopicPair(record.key, record.topic))
                 }
@@ -74,7 +74,7 @@ class OutboxProcessor(
             key = record.key,
             value = objectMapper.writeValueAsString(record.value),
         )
-        service.markAsProcessed(record)
+        outboxService.markAsProcessed(record)
         log.info("Processed outbox-record ${record.id} for key ${record.key} on topic ${record.topic}")
     }
 

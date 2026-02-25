@@ -75,19 +75,14 @@ internal class OutboxRepository {
         }
     }
 
-    fun markAsProcessed(recordId: OutboxRecordId) {
-        val sql =
-            """
-            UPDATE outbox_record
-            SET 
-                processed_at = CURRENT_TIMESTAMP, 
-                status = '${OutboxRecordStatus.PROCESSED.name}',
-                modified_at = CURRENT_TIMESTAMP
-            WHERE id = :id
-            """.trimIndent()
-
+    fun deletedOutboxRecord(recordId: OutboxRecordId) {
         Database.query { session ->
-            session.update(queryOf(sql, mapOf("id" to recordId.value)))
+            session.update(
+                queryOf(
+                    "DELETE FROM outbox_record WHERE id = :id",
+                    mapOf("id" to recordId.value),
+                ),
+            )
         }
     }
 
