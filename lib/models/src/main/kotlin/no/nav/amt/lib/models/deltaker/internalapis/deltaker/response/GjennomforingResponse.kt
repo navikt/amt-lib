@@ -1,4 +1,4 @@
-package no.nav.amt.deltaker.bff.apiclients.deltaker
+package no.nav.amt.lib.models.deltaker.internalapis.deltaker.response
 
 import no.nav.amt.lib.models.deltakerliste.GjennomforingPameldingType
 import no.nav.amt.lib.models.deltakerliste.GjennomforingStatusType
@@ -19,5 +19,5 @@ data class GjennomforingResponse(
     val oppmoteSted: String?,
     val arrangor: ArrangorResponse,
     val pameldingstype: GjennomforingPameldingType?,
-    val antallPlasser: Int?, // TODO: Brukes den her egentlig til noe i frontend?
+    val antallPlasser: Int?,
 )

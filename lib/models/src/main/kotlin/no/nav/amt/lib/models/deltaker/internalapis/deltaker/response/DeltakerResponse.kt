@@ -1,4 +1,4 @@
-package no.nav.amt.deltaker.bff.apiclients.deltaker
+package no.nav.amt.lib.models.deltaker.internalapis.deltaker.response
 
 import no.nav.amt.lib.models.arrangor.melding.Forslag
 import no.nav.amt.lib.models.deltaker.Deltakelsesinnhold
@@ -26,9 +26,10 @@ data class DeltakerResponse(
     val sistEndret: LocalDateTime,
     val opprettet: LocalDateTime,
     /*
-        Må vi ha med historikk?
-        Ja, virker sånn fordi mye informasjon utledes fra historikken i domeneobjektet
-        Bør vurdere å utlede dataene i amt-deltaker og sende strukturert?
+        Må vi ha med historikk? Ja, fordi noe informasjon utledes fra historikken i domeneobjektet i amt-deltaker-bff
+        Vi bør vurdere hente ut konkrete datapunkter i amt-deltaker så denne kan fjernes.
+        historikken blir brukt i frontend vha get /historikk endepunket, så vi kan vurdere om dette responsobjektet eller
+        en eget historikk endepunkt med respons skal lages
      */
     val historikk: List<DeltakerHistorikk>,
     val erLaastForEndringer: Boolean,

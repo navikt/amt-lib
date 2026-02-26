@@ -1,4 +1,4 @@
-package no.nav.amt.deltaker.bff.apiclients.deltaker
+package no.nav.amt.lib.models.deltaker.internalapis.deltaker.response
 
 
 data class ArrangorResponse(

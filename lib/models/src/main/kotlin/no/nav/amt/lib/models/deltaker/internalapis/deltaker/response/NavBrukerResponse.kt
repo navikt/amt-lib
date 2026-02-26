@@ -1,4 +1,4 @@
-package no.nav.amt.deltaker.bff.apiclients.deltaker
+package no.nav.amt.lib.models.deltaker.internalapis.deltaker.response
 
 import no.nav.amt.lib.models.deltaker.Innsatsgruppe
 import no.nav.amt.lib.models.person.Oppfolgingsperiode
