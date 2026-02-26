@@ -19,5 +19,4 @@ data class GjennomforingResponse(
     val oppmoteSted: String?,
     val arrangor: ArrangorResponse,
     val pameldingstype: GjennomforingPameldingType?,
-    val antallPlasser: Int?,
 )
