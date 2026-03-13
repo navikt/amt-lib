@@ -1,3 +1,5 @@
+Flyttet til nytt monorepo: https://github.com/navikt/amt-deltakelser
+
 # amt-lib
 
 Dette er et repository hvor vi i Komet kan dele kode i mellom backend appene våre.
